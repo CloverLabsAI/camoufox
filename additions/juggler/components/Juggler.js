@@ -4,15 +4,10 @@
 
 const {XPCOMUtils} = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 const {ComponentUtils} = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
-
-const lazy = {};
-
-ChromeUtils.defineESModuleGetters(lazy, {
-  Services: "resource://gre/modules/Services.sys.mjs",
-});
+const {Services} = ChromeUtils.importESModule("resource://gre/modules/Services.sys.mjs");
 
 // Load SimpleChannel in browser-process global.
-lazy.Services.scriptloader.loadSubScript('chrome://juggler/content/SimpleChannel.js');
+Services.scriptloader.loadSubScript('chrome://juggler/content/SimpleChannel.js');
 const {Dispatcher} = ChromeUtils.importESModule("chrome://juggler/content/protocol/Dispatcher.js");
 const {BrowserHandler} = ChromeUtils.importESModule("chrome://juggler/content/protocol/BrowserHandler.js");
 const {NetworkObserver} = ChromeUtils.importESModule("chrome://juggler/content/NetworkObserver.js");
@@ -75,11 +70,11 @@ export class Juggler {
   async observe(subject, topic) {
     switch (topic) {
       case "profile-after-change":
-        lazy.Services.obs.addObserver(this, "command-line-startup");
-        lazy.Services.obs.addObserver(this, "browser-idle-startup-tasks-finished");
+        Services.obs.addObserver(this, "command-line-startup");
+        Services.obs.addObserver(this, "browser-idle-startup-tasks-finished");
         break;
       case "command-line-startup":
-        lazy.Services.obs.removeObserver(this, topic);
+        Services.obs.removeObserver(this, topic);
         const cmdLine = subject;
         const jugglerPipeFlag = cmdLine.handleFlag('juggler-pipe', false);
         if (!jugglerPipeFlag)
@@ -87,17 +82,17 @@ export class Juggler {
 
         this._silent = cmdLine.findFlag('silent', false) >= 0;
         if (this._silent) {
-          lazy.Services.startup.enterLastWindowClosingSurvivalArea();
+          Services.startup.enterLastWindowClosingSurvivalArea();
           browserStartupFinishedCallback();
         }
-        lazy.Services.obs.addObserver(this, "final-ui-startup");
+        Services.obs.addObserver(this, "final-ui-startup");
         break;
       case "browser-idle-startup-tasks-finished":
         browserStartupFinishedCallback();
         break;
       // Used to wait until the initial application window has been opened.
       case "final-ui-startup":
-        lazy.Services.obs.removeObserver(this, topic);
+        Services.obs.removeObserver(this, topic);
 
         const targetRegistry = new TargetRegistry();
         new NetworkObserver(targetRegistry);
@@ -113,8 +108,8 @@ export class Juggler {
 
         // Force create hidden window here, otherwise its creation later closes the web socket!
         // Since https://phabricator.services.mozilla.com/D219834, hiddenDOMWindow is only available on MacOS.
-        if (lazy.Services.appShell.hasHiddenWindow) {
-          lazy.Services.appShell.hiddenDOMWindow;
+        if (Services.appShell.hasHiddenWindow) {
+          Services.appShell.hiddenDOMWindow;
         }
 
         let pipeStopped = false;
@@ -144,7 +139,7 @@ export class Juggler {
         const dispatcher = new Dispatcher(connection);
         browserHandler = new BrowserHandler(dispatcher.rootSession(), dispatcher, targetRegistry, browserStartupFinishedPromise, () => {
           if (this._silent)
-            lazy.Services.startup.exitLastWindowClosingSurvivalArea();
+            Services.startup.exitLastWindowClosingSurvivalArea();
           connection.onclose();
           pipe.stop();
           pipeStopped = true;
