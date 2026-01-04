@@ -24,7 +24,7 @@ ActorManagerParent.addJSWindowActors({
       esModuleURI: 'chrome://juggler/content/JugglerFrameParent.sys.mjs',
     },
     child: {
-      esModuleURI: 'chrome://juggler/content/content/JugglerFrameChild.sys.mjs',
+      esModuleURI: 'chrome://juggler/content/JugglerFrameChild.sys.mjs',
       events: {
         // Normally, we instantiate an actor when a new window is created.
         DOMWindowCreated: {},
