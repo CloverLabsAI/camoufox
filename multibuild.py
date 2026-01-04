@@ -128,6 +128,9 @@ def main():
     if 'macos' in args.target:
         BSYS.generate_assets_car()
 
+    # Ensure dist directory exists
+    os.makedirs('dist', exist_ok=True)
+
     # Run build
     for target in args.target:
         for arch in args.arch:
