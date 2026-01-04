@@ -2,9 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const {XPCOMUtils} = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const {ComponentUtils} = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
-const {Services} = ChromeUtils.importESModule("resource://gre/modules/Services.sys.mjs");
+// Services is available as a global in XPCOM component context
 
 // Load SimpleChannel in browser-process global.
 Services.scriptloader.loadSubScript('chrome://juggler/content/SimpleChannel.js');
