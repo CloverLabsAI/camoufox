@@ -5,7 +5,7 @@
 const {XPCOMUtils} = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 const {ComponentUtils} = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 
-const { Services } = ChromeUtils.importESModule("resource://gre/modules/Services.sys.mjs");
+// Services is a global in ESModule context - no import needed
 
 // Load SimpleChannel in browser-process global.
 Services.scriptloader.loadSubScript('chrome://juggler/content/SimpleChannel.js');
