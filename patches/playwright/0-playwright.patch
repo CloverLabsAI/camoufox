@@ -2340,13 +2340,13 @@ index cebc5d1eb1..81b4d13cdb 100644
  }
  
 diff --git a/juggler/screencast/HeadlessWindowCapturer.h b/juggler/screencast/HeadlessWindowCapturer.h
-index cb1bcbbfd7..6b39dfbea0 100644
+index 287d6013cb..f6b05c41df 100644
 --- a/juggler/screencast/HeadlessWindowCapturer.h
 +++ b/juggler/screencast/HeadlessWindowCapturer.h
-@@ -6,12 +6,17 @@
- 
+@@ -7,12 +7,17 @@
  #include <memory>
  #include <set>
+ #include <sys/types.h>
 +#include "api/scoped_refptr.h"
  #include "api/video/video_frame.h"
  #include "api/video/video_sink_interface.h"
@@ -2377,10 +2377,10 @@ index 701361add0..08e4fb9667 100644
  
  namespace {
 diff --git a/juggler/screencast/nsScreencastService.cpp b/juggler/screencast/nsScreencastService.cpp
-index 062a851429..953d973a3b 100644
+index 9c6546e052..f8b1340b57 100644
 --- a/juggler/screencast/nsScreencastService.cpp
 +++ b/juggler/screencast/nsScreencastService.cpp
-@@ -25,6 +25,8 @@
+@@ -27,6 +27,8 @@
  #include "mozilla/widget/PlatformWidgetTypes.h"
  #include "video_engine/desktop_capture_impl.h"
  #include "VideoEngine.h"
@@ -2876,26 +2876,6 @@ index 8cd4afc313..60f5eb6e52 100644
      return (
        (lazy.isRunningTests || Cu.isInAutomation) &&
        this.SERVER_URL == "data:,#remote-settings-dummy/v1"
-diff --git a/third_party/libwebrtc/api/location.h b/third_party/libwebrtc/api/location.h
-new file mode 100644
-index 0000000000..040cbc972b
---- /dev/null
-+++ b/third_party/libwebrtc/api/location.h
-@@ -0,0 +1,14 @@
-+#ifndef API_LOCATION_H_
-+#define API_LOCATION_H_
-+
-+namespace webrtc {
-+class Location {
-+ public:
-+  static constexpr Location Current() { return Location(); }
-+  constexpr Location() = default;
-+  constexpr Location(const Location&) = default;
-+  constexpr Location& operator=(const Location&) = default;
-+};
-+}  // namespace webrtc
-+
-+#endif  // API_LOCATION_H_
 diff --git a/toolkit/components/browser/nsIWebBrowserChrome.idl b/toolkit/components/browser/nsIWebBrowserChrome.idl
 index 75555352b8..72855a404e 100644
 --- a/toolkit/components/browser/nsIWebBrowserChrome.idl
