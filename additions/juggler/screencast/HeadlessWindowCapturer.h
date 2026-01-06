@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <set>
+#include <sys/types.h>
 #include "api/video/video_frame.h"
 #include "api/video/video_sink_interface.h"
 #include "modules/video_capture/video_capture.h"
