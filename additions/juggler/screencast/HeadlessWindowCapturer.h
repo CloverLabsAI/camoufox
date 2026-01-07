@@ -7,10 +7,16 @@
 #include <memory>
 #include <set>
 #include <sys/types.h>
+#include "api/scoped_refptr.h"
 #include "api/video/video_frame.h"
 #include "api/video/video_sink_interface.h"
 #include "modules/video_capture/video_capture.h"
 #include "rtc_base/deprecated/recursive_critical_section.h"
+#include "rtc_base/ref_counted_object.h"
+
+// Compatibility namespace aliases for WebRTC types
+namespace rtc = webrtc;
+
 #include "video_engine/desktop_capture_impl.h"
 
 class nsIWidget;

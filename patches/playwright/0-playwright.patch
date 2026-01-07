@@ -2339,28 +2339,6 @@ index cebc5d1eb1..81b4d13cdb 100644
    return nullptr;
  }
  
-diff --git a/juggler/screencast/HeadlessWindowCapturer.h b/juggler/screencast/HeadlessWindowCapturer.h
-index 287d6013cb..f6b05c41df 100644
---- a/juggler/screencast/HeadlessWindowCapturer.h
-+++ b/juggler/screencast/HeadlessWindowCapturer.h
-@@ -7,12 +7,17 @@
- #include <memory>
- #include <set>
- #include <sys/types.h>
-+#include "api/scoped_refptr.h"
- #include "api/video/video_frame.h"
- #include "api/video/video_sink_interface.h"
- #include "modules/video_capture/video_capture.h"
- #include "rtc_base/deprecated/recursive_critical_section.h"
-+#include "rtc_base/ref_counted_object.h"
- #include "video_engine/desktop_capture_impl.h"
- 
-+// Compatibility namespace aliases for WebRTC types
-+namespace rtc = webrtc;
-+
- class nsIWidget;
- 
- namespace mozilla {
 diff --git a/juggler/screencast/ScreencastEncoder.cpp b/juggler/screencast/ScreencastEncoder.cpp
 index 701361add0..08e4fb9667 100644
 --- a/juggler/screencast/ScreencastEncoder.cpp
