@@ -55,20 +55,22 @@ index 0000000000..769250803a
 diff --git a/dom/base/moz.build b/dom/base/moz.build
 --- a/dom/base/moz.build
 +++ b/dom/base/moz.build
-@@ -191,5 +191,6 @@ EXPORTS.mozilla.dom += [
-     "FilteredNodeIterator.h",
-     "FontSpacingSeedManager.h",
+@@ -229,5 +229,6 @@ EXPORTS.mozilla.dom += [
+     "TimeoutBudgetManager.h",
+     "TimeoutHandler.h",
+     "TimeoutManager.h",
 +    "TimezoneManager.h",
-     "FormData.h",
-     "FragmentDirective.h",
-     "FragmentOrElement.h",
-@@ -369,5 +370,6 @@ UNIFIED_SOURCES += [
-     "External.cpp",
-     "FontSpacingSeedManager.cpp",
+     "TreeIterator.h",
+     "TreeOrderedArray.h",
+     "TreeOrderedArrayInlines.h",
+@@ -417,5 +418,6 @@ UNIFIED_SOURCES += [
+     "TimeoutBudgetManager.cpp",
+     "TimeoutExecutor.cpp",
+     "TimeoutManager.cpp",
 +    "TimezoneManager.cpp",
-     "FormData.cpp",
-     "FragmentDirective.cpp",
-     "FragmentOrElement.cpp",
+     "TreeWalker.cpp",
+     "UIDirectionManager.cpp",
+     "UserActivation.cpp",
 diff --git a/dom/base/nsGlobalWindowInner.cpp b/dom/base/nsGlobalWindowInner.cpp
 --- a/dom/base/nsGlobalWindowInner.cpp
 +++ b/dom/base/nsGlobalWindowInner.cpp
