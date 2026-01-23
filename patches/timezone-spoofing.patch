@@ -55,14 +55,14 @@ index 0000000000..769250803a
 diff --git a/dom/base/moz.build b/dom/base/moz.build
 --- a/dom/base/moz.build
 +++ b/dom/base/moz.build
-@@ -191,6 +191,7 @@ EXPORTS.mozilla.dom += [
+@@ -191,5 +191,6 @@ EXPORTS.mozilla.dom += [
      "FilteredNodeIterator.h",
      "FontSpacingSeedManager.h",
 +    "TimezoneManager.h",
      "FormData.h",
      "FragmentDirective.h",
      "FragmentOrElement.h",
-@@ -369,6 +370,7 @@ UNIFIED_SOURCES += [
+@@ -369,5 +370,6 @@ UNIFIED_SOURCES += [
      "External.cpp",
      "FontSpacingSeedManager.cpp",
 +    "TimezoneManager.cpp",
