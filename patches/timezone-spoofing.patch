@@ -18,7 +18,7 @@ new file mode 100644
 index 0000000000..769250803a
 --- /dev/null
 +++ b/dom/base/TimezoneManager.h
-@@ -0,0 +1,33 @@
+@@ -0,0 +1,36 @@
 +#ifndef mozilla_dom_TimezoneManager_h
 +#define mozilla_dom_TimezoneManager_h
 +
@@ -31,16 +31,15 @@ index 0000000000..769250803a
 +class TimezoneManager {
 + public:
 +  static void SetTimezone(uint32_t userContextId, const nsAString& timezone) {
-+    nsAutoCString key;
-+    key.AppendPrintf("timezone_%u", userContextId);
-+    NS_LossyConvertUTF16toASCII timezoneASCII(timezone);
-+    RoverfoxStorageManager::GetInstance().Set(key, nsCString(timezoneASCII));
++    nsAutoString key;
++    key.AppendPrintf(u"timezone_%u", userContextId);
++    RoverfoxStorageManager::PutString(key, timezone);
 +  }
 +
-+  static bool GetTimezone(uint32_t userContextId, nsACString& outTimezone) {
-+    nsAutoCString key;
-+    key.AppendPrintf("timezone_%u", userContextId);
-+    return RoverfoxStorageManager::GetInstance().Get(key, outTimezone);
++  static bool GetTimezone(uint32_t userContextId, nsAString& outTimezone) {
++    nsAutoString key;
++    key.AppendPrintf(u"timezone_%u", userContextId);
++    return RoverfoxStorageManager::GetString(key, outTimezone);
 +  }
 +
 +  static bool IsFunctionEnabledForWebIDL(JSContext* cx, JSObject* obj) {
@@ -148,7 +147,7 @@ diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
  partial interface Window {
    [Throws, Func="mozilla::dom::FontSpacingSeedManager::IsFunctionEnabledForWebIDL"]
    undefined setFontSpacingSeed(unsigned long seed);
-+  [Func="mozilla::dom::TimezoneManager::IsFunctionEnabledForWebIDL"]
++  [Throws, Func="mozilla::dom::TimezoneManager::IsFunctionEnabledForWebIDL"]
 +  undefined setTimezone(DOMString timezone);
  };
 
