@@ -49,9 +49,6 @@ fi
 # Copy ALL new files/folders from ../additions to .
 run 'cp -r ../additions/* .'
 
-# Add camoucfg include path for MaskConfig.hpp (needed for locale-spoofing patch)
-echo -e '\nLOCAL_INCLUDES += ["/camoucfg"]' >> intl/components/moz.build
-
 # Provide a script that fetches and bootstraps Nightly and some mozconfigs
 run 'cp -v ../scripts/mozfetch.sh lw/'
 
