@@ -73,7 +73,7 @@ diff --git a/dom/geolocation/moz.build b/dom/geolocation/moz.build
 index 2d6b6b5fab..0c7ed74c6d 100644
 --- a/dom/geolocation/moz.build
 +++ b/dom/geolocation/moz.build
-@@ -61,3 +61,6 @@ elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
+@@ -84,4 +84,7 @@ elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
  BROWSER_CHROME_MANIFESTS += ["test/browser/browser.toml"]
  MOCHITEST_CHROME_MANIFESTS += ["test/chrome/chrome.toml"]
  MOCHITEST_MANIFESTS += ["test/mochitest/mochitest.toml"]
@@ -85,7 +85,7 @@ diff --git a/dom/system/NetworkGeolocationProvider.sys.mjs b/dom/system/NetworkG
 index 7edc62b4a6..19b77aa6b6 100644
 --- a/dom/system/NetworkGeolocationProvider.sys.mjs
 +++ b/dom/system/NetworkGeolocationProvider.sys.mjs
-@@ -442,17 +442,55 @@ NetworkGeolocationProvider.prototype = {
+@@ -442,17 +442,53 @@ NetworkGeolocationProvider.prototype = {
      let url = Services.urlFormatter.formatURLPref("geo.provider.network.url");
      LOG("Sending request");
  
@@ -148,3 +148,4 @@ index 7edc62b4a6..19b77aa6b6 100644
  
        if (this.listener) {
          this.listener.update(newLocation);
+
