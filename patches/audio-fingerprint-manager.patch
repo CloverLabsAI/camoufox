@@ -31,16 +31,18 @@ index 0000000000..f47a35b2e3
 +
 +/* static */ void
 +AudioFingerprintManager::SetSeed(uint32_t aUserContextId, uint32_t aSeed) {
-+  nsAutoCString key;
++  nsString key;
 +  key.AppendPrintf("audioFingerprintSeed_%u", aUserContextId);
-+  RoverfoxStorageManager::SetUint32(key, aSeed);
++  RoverfoxStorageManager::PutUint(key, aSeed);
 +}
 +
 +/* static */ uint32_t
 +AudioFingerprintManager::GetSeed(uint32_t aUserContextId) {
-+  nsAutoCString key;
++  nsString key;
 +  key.AppendPrintf("audioFingerprintSeed_%u", aUserContextId);
-+  return RoverfoxStorageManager::GetUint32(key, 0);
++  uint32_t seed = 0;
++  RoverfoxStorageManager::GetUint(key, seed);
++  return seed;
 +}
 +
 +/* static */ void

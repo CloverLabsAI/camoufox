@@ -38,21 +38,22 @@ index 0000000000..1a2b3c4d5e
 +
 +/* static */ void
 +ScreenDimensionManager::SetDimensions(uint32_t aUserContextId, int32_t aWidth, int32_t aHeight) {
-+  nsAutoCString widthKey, heightKey;
++  nsString widthKey, heightKey;
 +  widthKey.AppendPrintf("screenWidth_%u", aUserContextId);
 +  heightKey.AppendPrintf("screenHeight_%u", aUserContextId);
-+  RoverfoxStorageManager::SetUint32(widthKey, static_cast<uint32_t>(aWidth));
-+  RoverfoxStorageManager::SetUint32(heightKey, static_cast<uint32_t>(aHeight));
++  RoverfoxStorageManager::PutUint(widthKey, static_cast<uint32_t>(aWidth));
++  RoverfoxStorageManager::PutUint(heightKey, static_cast<uint32_t>(aHeight));
 +}
 +
 +/* static */ bool
 +ScreenDimensionManager::GetDimensions(uint32_t aUserContextId, int32_t* aWidth, int32_t* aHeight) {
-+  nsAutoCString widthKey, heightKey;
++  nsString widthKey, heightKey;
 +  widthKey.AppendPrintf("screenWidth_%u", aUserContextId);
 +  heightKey.AppendPrintf("screenHeight_%u", aUserContextId);
 +
-+  uint32_t width = RoverfoxStorageManager::GetUint32(widthKey, 0);
-+  uint32_t height = RoverfoxStorageManager::GetUint32(heightKey, 0);
++  uint32_t width = 0, height = 0;
++  RoverfoxStorageManager::GetUint(widthKey, width);
++  RoverfoxStorageManager::GetUint(heightKey, height);
 +
 +  if (width > 0 && height > 0) {
 +    *aWidth = static_cast<int32_t>(width);
@@ -64,16 +65,18 @@ index 0000000000..1a2b3c4d5e
 +
 +/* static */ void
 +ScreenDimensionManager::SetColorDepth(uint32_t aUserContextId, int32_t aColorDepth) {
-+  nsAutoCString key;
++  nsString key;
 +  key.AppendPrintf("screenColorDepth_%u", aUserContextId);
-+  RoverfoxStorageManager::SetUint32(key, static_cast<uint32_t>(aColorDepth));
++  RoverfoxStorageManager::PutUint(key, static_cast<uint32_t>(aColorDepth));
 +}
 +
 +/* static */ int32_t
 +ScreenDimensionManager::GetColorDepth(uint32_t aUserContextId) {
-+  nsAutoCString key;
++  nsString key;
 +  key.AppendPrintf("screenColorDepth_%u", aUserContextId);
-+  return static_cast<int32_t>(RoverfoxStorageManager::GetUint32(key, 0));
++  uint32_t depth = 0;
++  RoverfoxStorageManager::GetUint(key, depth);
++  return static_cast<int32_t>(depth);
 +}
 +
 +/* static */ bool
