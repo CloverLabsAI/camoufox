@@ -72,7 +72,7 @@ new file mode 100644
 index 0000000000..535ce3a6f9
 --- /dev/null
 +++ b/dom/base/AudioFingerprintManager.h
-@@ -0,0 +1,30 @@
+@@ -0,0 +1,28 @@
 +#ifndef mozilla_dom_AudioFingerprintManager_h
 +#define mozilla_dom_AudioFingerprintManager_h
 +
@@ -106,36 +106,35 @@ diff --git a/dom/base/moz.build b/dom/base/moz.build
 index dc13a2b4ac..a1b2c3d4e5 100644
 --- a/dom/base/moz.build
 +++ b/dom/base/moz.build
-@@ -44,6 +44,7 @@ XPIDL_MODULE = "dom"
-
- EXPORTS += [
-     "AttrArray.h",
+@@ -145,6 +145,7 @@ EXPORTS.mozilla.dom += [
+     "AnonymousContent.h",
+     "Attr.h",
 +    "AudioFingerprintManager.h",
-     "AutocompleteFieldList.h",
-     "Crypto.h",
-     "HTMLSplitOnSpacesTokenizer.h",
-@@ -326,6 +327,7 @@ UNIFIED_SOURCES += [
-     "AnimationFrameProvider.cpp",
+     "AutoPrintEventDispatcher.h",
+     "AutoSuppressEventHandlingAndSuspend.h",
+     "BarProps.h",
+@@ -331,6 +332,7 @@ UNIFIED_SOURCES += [
      "AnonymousContent.cpp",
      "Attr.cpp",
 +    "AudioFingerprintManager.cpp",
      "AttrArray.cpp",
      "BarProps.cpp",
      "BindContext.cpp",
+
 diff --git a/dom/base/nsGlobalWindowInner.cpp b/dom/base/nsGlobalWindowInner.cpp
 index 748ae6cf83..b2c3d4e5f6 100644
 --- a/dom/base/nsGlobalWindowInner.cpp
 +++ b/dom/base/nsGlobalWindowInner.cpp
 @@ -245,6 +245,7 @@
- #include "nsICookieService.h"
- #include "nsID.h"
  #include "nsIDOMStorageManager.h"
+ #include "FontSpacingSeedManager.h"
+ #include "nsDocShell.h"
 +#include "AudioFingerprintManager.h"
- #include "js/Date.h"
-
- #ifdef XP_WIN
-@@ -7452,6 +7453,17 @@ nsISerialEventTarget* nsGlobalWindowInner::SerialEventTarget() const {
-   return GetMainThreadSerialEventTarget();
+ #include "mozilla/OriginAttributes.h"
+ #include "nsIDOMXULControlElement.h"
+ #include "nsIDeviceSensors.h"
+@@ -7485,6 +7486,17 @@ void nsGlobalWindowInner::SetFontSpacingSeed(uint32_t seed, ErrorResult& aRv) {
+   FontSpacingSeedManager::SetSeed(userContextId, seed);
  }
 
 +void nsGlobalWindowInner::SetAudioFingerprintSeed(uint32_t seed,
@@ -152,20 +151,22 @@ index 748ae6cf83..b2c3d4e5f6 100644
  Worklet* nsGlobalWindowInner::GetPaintWorklet(ErrorResult& aRv) {
    if (!mPaintWorklet) {
      nsIPrincipal* principal = GetPrincipal();
+
 diff --git a/dom/base/nsGlobalWindowInner.h b/dom/base/nsGlobalWindowInner.h
 index 3183172d29..c4d5e6f7g8 100644
 --- a/dom/base/nsGlobalWindowInner.h
 +++ b/dom/base/nsGlobalWindowInner.h
-@@ -680,6 +680,9 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
-   void GetWebExposedLocales(nsTArray<nsString>& aLocales);
+@@ -801,6 +801,9 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
 
-   mozilla::dom::IntlUtils* GetIntlUtils(mozilla::ErrorResult& aRv);
-+
+   void SetFontSpacingSeed(uint32_t seed, mozilla::ErrorResult& aRv);
+
 +  // Audio fingerprint seed for per-context audio fingerprinting
 +  void SetAudioFingerprintSeed(uint32_t seed, mozilla::ErrorResult& aRv);
++
+   void StoreSharedWorker(mozilla::dom::SharedWorker* aSharedWorker);
 
-   void GetProductSub(nsAString& aProductSub, CallerType aCallerType);
-   bool IsSecureContext() const;
+   void ForgetSharedWorker(mozilla::dom::SharedWorker* aSharedWorker);
+
 diff --git a/dom/media/webaudio/AudioBuffer.cpp b/dom/media/webaudio/AudioBuffer.cpp
 index f59d01944a..d21c86e030 100644
 --- a/dom/media/webaudio/AudioBuffer.cpp
@@ -206,13 +207,14 @@ diff --git a/dom/media/webaudio/moz.build b/dom/media/webaudio/moz.build
 index 3ee8c0aa76..4cf10f3039 100644
 --- a/dom/media/webaudio/moz.build
 +++ b/dom/media/webaudio/moz.build
-@@ -149,3 +149,6 @@ include("/ipc/chromium/chromium-config.mozbuild")
+@@ -152,3 +152,6 @@ LOCAL_INCLUDES += [".."]
 
- FINAL_LIBRARY = "xul"
- LOCAL_INCLUDES += [".."]
+ # DOM Mask
+ LOCAL_INCLUDES += ["/camoucfg"]
 +
 +# AudioFingerprintManager in dom/base
 +LOCAL_INCLUDES += ["/dom/base"]
+
 diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
 index a6f0d96a36..b3c4d5e6f7 100644
 --- a/dom/webidl/Window.webidl

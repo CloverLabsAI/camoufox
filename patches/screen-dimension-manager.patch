@@ -3,7 +3,7 @@ new file mode 100644
 index 0000000000..1a2b3c4d5e
 --- /dev/null
 +++ b/dom/base/ScreenDimensionManager.cpp
-@@ -0,0 +1,86 @@
+@@ -0,0 +1,83 @@
 +/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 +/* This Source Code Form is subject to the terms of the Mozilla Public
@@ -93,7 +93,7 @@ new file mode 100644
 index 0000000000..2b3c4d5e6f
 --- /dev/null
 +++ b/dom/base/ScreenDimensionManager.h
-@@ -0,0 +1,42 @@
+@@ -0,0 +1,39 @@
 +/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 +/* This Source Code Form is subject to the terms of the Mozilla Public
@@ -138,36 +138,35 @@ diff --git a/dom/base/moz.build b/dom/base/moz.build
 index dc13a2b4ac..b2c3d4e5f6 100644
 --- a/dom/base/moz.build
 +++ b/dom/base/moz.build
-@@ -263,6 +263,7 @@ EXPORTS.mozilla.dom += [
+@@ -257,6 +257,7 @@ EXPORTS.mozilla.dom += [
      "ResponsiveImageSelector.h",
      "SameProcessMessageQueue.h",
-     "ScriptableContentIterator.h",
 +    "ScreenDimensionManager.h",
      "ScreenLuminance.h",
      "ScreenOrientation.h",
      "Selection.h",
-@@ -471,6 +472,7 @@ UNIFIED_SOURCES += [
+@@ -462,6 +463,7 @@ UNIFIED_SOURCES += [
      "ResponsiveImageSelector.cpp",
      "SameProcessMessageQueue.cpp",
-     "ScriptableContentIterator.cpp",
 +    "ScreenDimensionManager.cpp",
      "ScreenLuminance.cpp",
      "ScreenOrientation.cpp",
-     "Selection.cpp",
+     "ScriptableContentIterator.cpp",
+
 diff --git a/dom/base/nsGlobalWindowInner.cpp b/dom/base/nsGlobalWindowInner.cpp
 index 748ae6cf83..c3d4e5f6g7 100644
 --- a/dom/base/nsGlobalWindowInner.cpp
 +++ b/dom/base/nsGlobalWindowInner.cpp
-@@ -245,6 +245,7 @@
- #include "nsICookieService.h"
- #include "nsID.h"
- #include "nsIDOMStorageManager.h"
+@@ -246,6 +246,7 @@
+ #include "FontSpacingSeedManager.h"
+ #include "nsDocShell.h"
+ #include "AudioFingerprintManager.h"
 +#include "ScreenDimensionManager.h"
- #include "js/Date.h"
-
- #ifdef XP_WIN
-@@ -7452,6 +7453,28 @@ nsISerialEventTarget* nsGlobalWindowInner::SerialEventTarget() const {
-   return GetMainThreadSerialEventTarget();
+ #include "mozilla/OriginAttributes.h"
+ #include "nsIDOMXULControlElement.h"
+ #include "nsIDeviceSensors.h"
+@@ -7496,6 +7497,28 @@ void nsGlobalWindowInner::SetAudioFingerprintSeed(uint32_t seed,
+   AudioFingerprintManager::SetSeed(userContextId, seed);
  }
 
 +void nsGlobalWindowInner::SetScreenDimensions(int32_t aWidth, int32_t aHeight,
@@ -197,26 +196,28 @@ index 748ae6cf83..c3d4e5f6g7 100644
  Worklet* nsGlobalWindowInner::GetPaintWorklet(ErrorResult& aRv) {
    if (!mPaintWorklet) {
      nsIPrincipal* principal = GetPrincipal();
+
 diff --git a/dom/base/nsGlobalWindowInner.h b/dom/base/nsGlobalWindowInner.h
 index 3183172d29..d4e5f6g7h8 100644
 --- a/dom/base/nsGlobalWindowInner.h
 +++ b/dom/base/nsGlobalWindowInner.h
-@@ -680,6 +680,10 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
-   void GetWebExposedLocales(nsTArray<nsString>& aLocales);
+@@ -804,6 +804,10 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
+   // Audio fingerprint seed for per-context audio fingerprinting
+   void SetAudioFingerprintSeed(uint32_t seed, mozilla::ErrorResult& aRv);
 
-   mozilla::dom::IntlUtils* GetIntlUtils(mozilla::ErrorResult& aRv);
-+
 +  // Screen dimension methods for per-context screen spoofing
 +  void SetScreenDimensions(int32_t aWidth, int32_t aHeight, mozilla::ErrorResult& aRv);
 +  void SetScreenColorDepth(int32_t aColorDepth, mozilla::ErrorResult& aRv);
++
+   void StoreSharedWorker(mozilla::dom::SharedWorker* aSharedWorker);
 
-   void GetProductSub(nsAString& aProductSub, CallerType aCallerType);
-   bool IsSecureContext() const;
+   void ForgetSharedWorker(mozilla::dom::SharedWorker* aSharedWorker);
+
 diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
 index a6f0d96a36..c4d5e6f7g8 100644
 --- a/dom/webidl/Window.webidl
 +++ b/dom/webidl/Window.webidl
-@@ -441,6 +441,12 @@ partial interface Window {
+@@ -438,6 +438,12 @@ partial interface Window {
     */
    undefined                 scrollByLines(long numLines, optional ScrollOptions options = {});
 
