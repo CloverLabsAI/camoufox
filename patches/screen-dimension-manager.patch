@@ -142,36 +142,36 @@ index dc13a2b4ac..b2c3d4e5f6 100644
 --- a/dom/base/moz.build
 +++ b/dom/base/moz.build
 @@ -253,6 +253,7 @@ EXPORTS.mozilla.dom += [
-     "ResizeObserver.h",
-     "ResponsiveImageSelector.h",
-     "SameProcessMessageQueue.h",
+    "ResizeObserver.h",
+    "ResponsiveImageSelector.h",
+    "SameProcessMessageQueue.h",
 +    "ScreenDimensionManager.h",
-     "ScreenLuminance.h",
-     "ScreenOrientation.h",
-     "Selection.h",
+    "ScreenLuminance.h",
+    "ScreenOrientation.h",
+    "Selection.h",
 @@ -457,6 +458,7 @@ UNIFIED_SOURCES += [
-     "ResizeObserver.cpp",
-     "ResponsiveImageSelector.cpp",
-     "SameProcessMessageQueue.cpp",
+    "ResizeObserver.cpp",
+    "ResponsiveImageSelector.cpp",
+    "SameProcessMessageQueue.cpp",
 +    "ScreenDimensionManager.cpp",
-     "ScreenLuminance.cpp",
-     "ScreenOrientation.cpp",
-     "Selection.cpp",
+    "ScreenLuminance.cpp",
+    "ScreenOrientation.cpp",
+    "Selection.cpp",
 
 diff --git a/dom/base/nsGlobalWindowInner.cpp b/dom/base/nsGlobalWindowInner.cpp
 index 748ae6cf83..c3d4e5f6g7 100644
 --- a/dom/base/nsGlobalWindowInner.cpp
 +++ b/dom/base/nsGlobalWindowInner.cpp
-@@ -246,6 +246,7 @@
- #include "FontSpacingSeedManager.h"
- #include "nsDocShell.h"
- #include "AudioFingerprintManager.h"
+@@ -277,6 +277,7 @@
+ #include "nsISizeOfEventTarget.h"
+ #include "nsISlowScriptDebug.h"
+ #include "nsISupportsUtils.h"
 +#include "ScreenDimensionManager.h"
- #include "mozilla/OriginAttributes.h"
- #include "nsIDOMXULControlElement.h"
- #include "nsIDeviceSensors.h"
-@@ -7496,6 +7497,30 @@ void nsGlobalWindowInner::SetAudioFingerprintSeed(uint32_t seed,
-   AudioFingerprintManager::SetSeed(userContextId, seed);
+ #include "nsIThread.h"
+ #include "nsITimedChannel.h"
+ #include "nsIURI.h"
+@@ -7420,6 +7421,30 @@ nsGlobalWindowInner::GetAudioWorklet(ErrorResult& aRv) {
+   return mAudioWorklet;
  }
 
 +void nsGlobalWindowInner::SetScreenDimensions(int32_t aWidth, int32_t aHeight,
@@ -206,17 +206,17 @@ diff --git a/dom/base/nsGlobalWindowInner.h b/dom/base/nsGlobalWindowInner.h
 index 3183172d29..d4e5f6g7h8 100644
 --- a/dom/base/nsGlobalWindowInner.h
 +++ b/dom/base/nsGlobalWindowInner.h
-@@ -804,6 +804,10 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
-   // Audio fingerprint seed for per-context audio fingerprinting
-   void SetAudioFingerprintSeed(uint32_t seed, mozilla::ErrorResult& aRv);
+@@ -750,6 +750,10 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
+
+   Worklet* GetPaintWorklet(mozilla::ErrorResult& aRv);
 
 +  // Screen dimension methods for per-context screen spoofing
 +  void SetScreenDimensions(int32_t aWidth, int32_t aHeight, mozilla::ErrorResult& aRv);
 +  void SetScreenColorDepth(int32_t aColorDepth, mozilla::ErrorResult& aRv);
 +
-   void StoreSharedWorker(mozilla::dom::SharedWorker* aSharedWorker);
+   void GetRegionalPrefsLocales(nsTArray<nsString>& aLocales);
 
-   void ForgetSharedWorker(mozilla::dom::SharedWorker* aSharedWorker);
+   void GetWebExposedLocales(nsTArray<nsString>& aLocales);
 
 diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
 index a6f0d96a36..c4d5e6f7g8 100644
