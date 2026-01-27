@@ -41,8 +41,8 @@ index 0000000000..1a2b3c4d5e
 +  nsAutoCString widthKey, heightKey;
 +  widthKey.AppendPrintf("screenWidth_%u", aUserContextId);
 +  heightKey.AppendPrintf("screenHeight_%u", aUserContextId);
-+  RoverfoxStorageManager::SetInt32(widthKey, aWidth);
-+  RoverfoxStorageManager::SetInt32(heightKey, aHeight);
++  RoverfoxStorageManager::SetUint32(widthKey, static_cast<uint32_t>(aWidth));
++  RoverfoxStorageManager::SetUint32(heightKey, static_cast<uint32_t>(aHeight));
 +}
 +
 +/* static */ bool
@@ -51,12 +51,12 @@ index 0000000000..1a2b3c4d5e
 +  widthKey.AppendPrintf("screenWidth_%u", aUserContextId);
 +  heightKey.AppendPrintf("screenHeight_%u", aUserContextId);
 +
-+  int32_t width = RoverfoxStorageManager::GetInt32(widthKey, 0);
-+  int32_t height = RoverfoxStorageManager::GetInt32(heightKey, 0);
++  uint32_t width = RoverfoxStorageManager::GetUint32(widthKey, 0);
++  uint32_t height = RoverfoxStorageManager::GetUint32(heightKey, 0);
 +
 +  if (width > 0 && height > 0) {
-+    *aWidth = width;
-+    *aHeight = height;
++    *aWidth = static_cast<int32_t>(width);
++    *aHeight = static_cast<int32_t>(height);
 +    return true;
 +  }
 +  return false;
@@ -66,14 +66,14 @@ index 0000000000..1a2b3c4d5e
 +ScreenDimensionManager::SetColorDepth(uint32_t aUserContextId, int32_t aColorDepth) {
 +  nsAutoCString key;
 +  key.AppendPrintf("screenColorDepth_%u", aUserContextId);
-+  RoverfoxStorageManager::SetInt32(key, aColorDepth);
++  RoverfoxStorageManager::SetUint32(key, static_cast<uint32_t>(aColorDepth));
 +}
 +
 +/* static */ int32_t
 +ScreenDimensionManager::GetColorDepth(uint32_t aUserContextId) {
 +  nsAutoCString key;
 +  key.AppendPrintf("screenColorDepth_%u", aUserContextId);
-+  return RoverfoxStorageManager::GetInt32(key, 0);
++  return static_cast<int32_t>(RoverfoxStorageManager::GetUint32(key, 0));
 +}
 +
 +/* static */ bool
