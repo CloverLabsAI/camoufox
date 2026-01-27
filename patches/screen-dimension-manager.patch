@@ -141,14 +141,16 @@ diff --git a/dom/base/moz.build b/dom/base/moz.build
 index dc13a2b4ac..b2c3d4e5f6 100644
 --- a/dom/base/moz.build
 +++ b/dom/base/moz.build
-@@ -255,6 +255,7 @@ EXPORTS.mozilla.dom += [
+@@ -253,6 +253,7 @@ EXPORTS.mozilla.dom += [
+     "ResizeObserver.h",
      "ResponsiveImageSelector.h",
      "SameProcessMessageQueue.h",
 +    "ScreenDimensionManager.h",
      "ScreenLuminance.h",
      "ScreenOrientation.h",
      "Selection.h",
-@@ -459,6 +460,7 @@ UNIFIED_SOURCES += [
+@@ -457,6 +458,7 @@ UNIFIED_SOURCES += [
+     "ResizeObserver.cpp",
      "ResponsiveImageSelector.cpp",
      "SameProcessMessageQueue.cpp",
 +    "ScreenDimensionManager.cpp",
