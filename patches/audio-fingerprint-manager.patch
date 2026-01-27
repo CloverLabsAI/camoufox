@@ -53,7 +53,7 @@ index 0000000000..f47a35b2e3
 +  for (uint32_t i = 0; i < length; ++i) {
 +    state = (state * 1664525u + 1013904223u);
 +    float normalized = static_cast<float>(state) / 4294967295.0f;
-+    float multiplier = 0.9999f + normalized * 0.0002f;
++    float multiplier = 0.999f + normalized * 0.002f;
 +    data[i] *= multiplier;
 +  }
 +}
