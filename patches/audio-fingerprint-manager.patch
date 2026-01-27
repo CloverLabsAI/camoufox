@@ -1,0 +1,227 @@
+diff --git a/dom/base/AudioFingerprintManager.cpp b/dom/base/AudioFingerprintManager.cpp
+new file mode 100644
+index 0000000000..f47a35b2e3
+--- /dev/null
++++ b/dom/base/AudioFingerprintManager.cpp
+@@ -0,0 +1,62 @@
++#include "AudioFingerprintManager.h"
++#include "RoverfoxStorageManager.h"
++#include "nsGlobalWindowInner.h"
++#include "xpcpublic.h"
++#include "mozilla/dom/Document.h"
++
++namespace mozilla {
++namespace dom {
++
++/* static */ uint32_t
++AudioFingerprintManager::GetUserContextIdFromWindow(nsPIDOMWindowInner* aWindow) {
++  if (!aWindow) {
++    return 0;
++  }
++  Document* doc = aWindow->GetExtantDoc();
++  if (!doc) {
++    return 0;
++  }
++  nsIPrincipal* principal = doc->NodePrincipal();
++  if (!principal) {
++    return 0;
++  }
++  return principal->GetUserContextId();
++}
++
++/* static */ void
++AudioFingerprintManager::SetSeed(uint32_t aUserContextId, uint32_t aSeed) {
++  nsAutoCString key;
++  key.AppendPrintf("audioFingerprintSeed_%u", aUserContextId);
++  RoverfoxStorageManager::SetUint32(key, aSeed);
++}
++
++/* static */ uint32_t
++AudioFingerprintManager::GetSeed(uint32_t aUserContextId) {
++  nsAutoCString key;
++  key.AppendPrintf("audioFingerprintSeed_%u", aUserContextId);
++  return RoverfoxStorageManager::GetUint32(key, 0);
++}
++
++/* static */ void
++AudioFingerprintManager::ApplyTransformation(float* data, uint32_t length, uint32_t seed) {
++  if (seed == 0 || length == 0 || !data) {
++    return;
++  }
++  // LCG for deterministic transformation - same seed always produces same result
++  uint32_t state = seed;
++  for (uint32_t i = 0; i < length; ++i) {
++    state = (state * 1664525u + 1013904223u);
++    float normalized = static_cast<float>(state) / 4294967295.0f;
++    float multiplier = 0.9999f + normalized * 0.0002f;
++    data[i] *= multiplier;
++  }
++}
++
++/* static */ bool
++AudioFingerprintManager::IsFunctionEnabledForWebIDL(JSContext* aCx, JSObject* aObj) {
++  nsGlobalWindowInner* win = xpc::WindowOrNull(aObj);
++  return win != nullptr;
++}
++
++}  // namespace dom
++}  // namespace mozilla
+diff --git a/dom/base/AudioFingerprintManager.h b/dom/base/AudioFingerprintManager.h
+new file mode 100644
+index 0000000000..535ce3a6f9
+--- /dev/null
++++ b/dom/base/AudioFingerprintManager.h
+@@ -0,0 +1,30 @@
++#ifndef mozilla_dom_AudioFingerprintManager_h
++#define mozilla_dom_AudioFingerprintManager_h
++
++#include "nsString.h"
++#include "nsPIDOMWindow.h"
++
++struct JSContext;
++class JSObject;
++
++namespace mozilla {
++namespace dom {
++
++class AudioFingerprintManager {
++ public:
++  static uint32_t GetUserContextIdFromWindow(nsPIDOMWindowInner* aWindow);
++
++  static void SetSeed(uint32_t aUserContextId, uint32_t aSeed);
++  static uint32_t GetSeed(uint32_t aUserContextId);
++
++  static void ApplyTransformation(float* data, uint32_t length, uint32_t seed);
++
++  static bool IsFunctionEnabledForWebIDL(JSContext* aCx, JSObject* aObj);
++};
++
++}  // namespace dom
++}  // namespace mozilla
++
++#endif  // mozilla_dom_AudioFingerprintManager_h
+diff --git a/dom/base/moz.build b/dom/base/moz.build
+index dc13a2b4ac..a1b2c3d4e5 100644
+--- a/dom/base/moz.build
++++ b/dom/base/moz.build
+@@ -44,6 +44,7 @@ XPIDL_MODULE = "dom"
+
+ EXPORTS += [
+     "AttrArray.h",
++    "AudioFingerprintManager.h",
+     "AutocompleteFieldList.h",
+     "Crypto.h",
+     "HTMLSplitOnSpacesTokenizer.h",
+@@ -326,6 +327,7 @@ UNIFIED_SOURCES += [
+     "AnimationFrameProvider.cpp",
+     "AnonymousContent.cpp",
+     "Attr.cpp",
++    "AudioFingerprintManager.cpp",
+     "AttrArray.cpp",
+     "BarProps.cpp",
+     "BindContext.cpp",
+diff --git a/dom/base/nsGlobalWindowInner.cpp b/dom/base/nsGlobalWindowInner.cpp
+index 748ae6cf83..b2c3d4e5f6 100644
+--- a/dom/base/nsGlobalWindowInner.cpp
++++ b/dom/base/nsGlobalWindowInner.cpp
+@@ -245,6 +245,7 @@
+ #include "nsICookieService.h"
+ #include "nsID.h"
+ #include "nsIDOMStorageManager.h"
++#include "AudioFingerprintManager.h"
+ #include "js/Date.h"
+
+ #ifdef XP_WIN
+@@ -7452,6 +7453,17 @@ nsISerialEventTarget* nsGlobalWindowInner::SerialEventTarget() const {
+   return GetMainThreadSerialEventTarget();
+ }
+
++void nsGlobalWindowInner::SetAudioFingerprintSeed(uint32_t seed,
++                                                   ErrorResult& aRv) {
++  uint32_t userContextId = AudioFingerprintManager::GetUserContextIdFromWindow(this);
++
++  if (seed == 0) {
++    aRv.ThrowTypeError("Audio fingerprint seed must be a non-zero integer");
++    return;
++  }
++  AudioFingerprintManager::SetSeed(userContextId, seed);
++}
++
+ Worklet* nsGlobalWindowInner::GetPaintWorklet(ErrorResult& aRv) {
+   if (!mPaintWorklet) {
+     nsIPrincipal* principal = GetPrincipal();
+diff --git a/dom/base/nsGlobalWindowInner.h b/dom/base/nsGlobalWindowInner.h
+index 3183172d29..c4d5e6f7g8 100644
+--- a/dom/base/nsGlobalWindowInner.h
++++ b/dom/base/nsGlobalWindowInner.h
+@@ -680,6 +680,9 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
+   void GetWebExposedLocales(nsTArray<nsString>& aLocales);
+
+   mozilla::dom::IntlUtils* GetIntlUtils(mozilla::ErrorResult& aRv);
++
++  // Audio fingerprint seed for per-context audio fingerprinting
++  void SetAudioFingerprintSeed(uint32_t seed, mozilla::ErrorResult& aRv);
+
+   void GetProductSub(nsAString& aProductSub, CallerType aCallerType);
+   bool IsSecureContext() const;
+diff --git a/dom/media/webaudio/AudioBuffer.cpp b/dom/media/webaudio/AudioBuffer.cpp
+index f59d01944a..d21c86e030 100644
+--- a/dom/media/webaudio/AudioBuffer.cpp
++++ b/dom/media/webaudio/AudioBuffer.cpp
+@@ -21,6 +21,7 @@
+ #include "mozilla/dom/AudioBufferBinding.h"
+ #include "nsPrintfCString.h"
+ #include "nsTHashSet.h"
++#include "AudioFingerprintManager.h"
+
+ namespace mozilla::dom {
+
+@@ -303,6 +304,23 @@ bool AudioBuffer::RestoreJSChannelData(JSContext* aJSContext) {
+       MOZ_ASSERT(!isShared);  // Was created as unshared above
+       CopyChannelDataToFloat(mSharedChannels, i, 0, jsData, Length());
+     }
++
++    // Apply audio fingerprint transformation if a seed is set for this context
++    {
++      nsPIDOMWindowInner* global = GetParentObject();
++      if (global) {
++        uint32_t userContextId = AudioFingerprintManager::GetUserContextIdFromWindow(global);
++        uint32_t seed = AudioFingerprintManager::GetSeed(userContextId);
++        if (seed != 0) {
++          JS::AutoCheckCannotGC nogc;
++          bool isShared;
++          float* jsData = JS_GetFloat32ArrayData(array, &isShared, nogc);
++          if (!isShared && jsData) {
++            AudioFingerprintManager::ApplyTransformation(jsData, Length(), seed);
++          }
++        }
++      }
++    }
+     mJSChannels[i] = array;
+   }
+
+diff --git a/dom/media/webaudio/moz.build b/dom/media/webaudio/moz.build
+index 3ee8c0aa76..4cf10f3039 100644
+--- a/dom/media/webaudio/moz.build
++++ b/dom/media/webaudio/moz.build
+@@ -149,3 +149,6 @@ include("/ipc/chromium/chromium-config.mozbuild")
+
+ FINAL_LIBRARY = "xul"
+ LOCAL_INCLUDES += [".."]
++
++# AudioFingerprintManager in dom/base
++LOCAL_INCLUDES += ["/dom/base"]
+diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
+index a6f0d96a36..b3c4d5e6f7 100644
+--- a/dom/webidl/Window.webidl
++++ b/dom/webidl/Window.webidl
+@@ -517,3 +517,9 @@ partial interface Window {
+   [Pref="dom.visualviewport.enabled", Replaceable, SameObject]
+   readonly attribute VisualViewport? visualViewport;
+ };
++
++// Audio fingerprint seed for per-context audio fingerprinting
++partial interface Window {
++  [Throws, Func="mozilla::dom::AudioFingerprintManager::IsFunctionEnabledForWebIDL"]
++  undefined setAudioFingerprintSeed(unsigned long seed);
++};
