@@ -138,7 +138,7 @@ index 0000000000..2b3c4d5e6f
 +#endif  // mozilla_dom_ScreenDimensionManager_h
 
 diff --git a/dom/base/moz.build b/dom/base/moz.build
-index dc13a2b4ac..b2c3d4e5f6 100644
+index cd9090cda3..b2c3d4e5f6 100644
 --- a/dom/base/moz.build
 +++ b/dom/base/moz.build
 @@ -253,6 +253,7 @@ EXPORTS.mozilla.dom += [
@@ -159,7 +159,7 @@ index dc13a2b4ac..b2c3d4e5f6 100644
     "Selection.cpp",
 
 diff --git a/dom/base/nsGlobalWindowInner.cpp b/dom/base/nsGlobalWindowInner.cpp
-index 748ae6cf83..c3d4e5f6g7 100644
+index 748ae6cf83..c3d4e5f6a7 100644
 --- a/dom/base/nsGlobalWindowInner.cpp
 +++ b/dom/base/nsGlobalWindowInner.cpp
 @@ -277,6 +277,7 @@
@@ -203,7 +203,7 @@ index 748ae6cf83..c3d4e5f6g7 100644
      nsIPrincipal* principal = GetPrincipal();
 
 diff --git a/dom/base/nsGlobalWindowInner.h b/dom/base/nsGlobalWindowInner.h
-index 3183172d29..d4e5f6g7h8 100644
+index 3183172d29..d4e5f6a7b8 100644
 --- a/dom/base/nsGlobalWindowInner.h
 +++ b/dom/base/nsGlobalWindowInner.h
 @@ -750,6 +750,10 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
@@ -219,19 +219,22 @@ index 3183172d29..d4e5f6g7h8 100644
    void GetWebExposedLocales(nsTArray<nsString>& aLocales);
 
 diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
-index a6f0d96a36..c4d5e6f7g8 100644
+index a6f0d96a36..b1c2d3e4f5 100644
 --- a/dom/webidl/Window.webidl
 +++ b/dom/webidl/Window.webidl
-@@ -438,6 +438,12 @@ partial interface Window {
-    */
-   undefined                 scrollByLines(long numLines, optional ScrollOptions options = {});
+@@ -892,6 +892,14 @@ partial interface Window {
+  readonly attribute VisualViewport visualViewport;
+};
 
++// Screen dimension interface for per-context screen spoofing
++partial interface Window {
 +  [Throws, Func="mozilla::dom::ScreenDimensionManager::IsFunctionEnabledForWebIDL"]
 +  undefined setScreenDimensions(long width, long height);
 +
 +  [Throws, Func="mozilla::dom::ScreenDimensionManager::IsFunctionEnabledForWebIDL"]
 +  undefined setScreenColorDepth(long colorDepth);
++};
 +
-   /**
-    * Method for scrolling this window by a number of pages.
-    */
+ // Used to assign marks to appear on the scrollbar when
+ // finding on a page.
+ partial interface Window {
