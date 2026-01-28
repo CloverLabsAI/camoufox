@@ -135,12 +135,11 @@ new file mode 100644
 index 0000000000..63d43f3b86
 --- /dev/null
 +++ b/dom/base/FontSpacingSeedManager.h
-@@ -0,0 +1,71 @@
+@@ -0,0 +1,70 @@
 +#ifndef mozilla_dom_FontSpacingSeedManager_h
 +#define mozilla_dom_FontSpacingSeedManager_h
 +
 +#include "nsString.h"
-+#include "RoverfoxStorageManager.h"
 +
 +namespace mozilla {
 +namespace dom {
@@ -282,7 +281,7 @@ index 0000000000..d5700aea62
 +#define mozilla_dom_RoverfoxStorageManager_h
 +
 +#include "mozilla/Mutex.h"
-+#include "nsBaseHashtable.h"
++#include "nsTHashMap.h"
 +#include "nsString.h"
 +#include "nsHashKeys.h"
 +
