@@ -230,11 +230,15 @@ new file mode 100644
 index 0000000000..c20cb032f6
 --- /dev/null
 +++ b/dom/base/WebRTCIPManager.h
-@@ -0,0 +1,104 @@
+@@ -0,0 +1,108 @@
 +#ifndef mozilla_dom_WebRTCIPManager_h
 +#define mozilla_dom_WebRTCIPManager_h
 +
 +#include "nsString.h"
++
++struct JSContext;
++class JSObject;
++class nsGlobalWindowInner;
 +
 +namespace mozilla {
 +namespace dom {
