@@ -90,7 +90,7 @@ index 0000000000..1a2b3c4d5e
 +
 +}  // namespace dom
 +}  // namespace mozilla
-
+ 
 diff --git a/dom/base/ScreenDimensionManager.h b/dom/base/ScreenDimensionManager.h
 new file mode 100644
 index 0000000000..2b3c4d5e6f
@@ -136,28 +136,28 @@ index 0000000000..2b3c4d5e6f
 +}  // namespace mozilla
 +
 +#endif  // mozilla_dom_ScreenDimensionManager_h
-
+ 
 diff --git a/dom/base/moz.build b/dom/base/moz.build
 index cd9090cda3..b2c3d4e5f6 100644
 --- a/dom/base/moz.build
 +++ b/dom/base/moz.build
 @@ -253,6 +253,7 @@ EXPORTS.mozilla.dom += [
-    "ResizeObserver.h",
-    "ResponsiveImageSelector.h",
-    "SameProcessMessageQueue.h",
+     "ResizeObserver.h",
+     "ResponsiveImageSelector.h",
+     "SameProcessMessageQueue.h",
 +    "ScreenDimensionManager.h",
-    "ScreenLuminance.h",
-    "ScreenOrientation.h",
-    "Selection.h",
+     "ScreenLuminance.h",
+     "ScreenOrientation.h",
+     "Selection.h",
 @@ -457,6 +458,7 @@ UNIFIED_SOURCES += [
-    "ResizeObserver.cpp",
-    "ResponsiveImageSelector.cpp",
-    "SameProcessMessageQueue.cpp",
+     "ResizeObserver.cpp",
+     "ResponsiveImageSelector.cpp",
+     "SameProcessMessageQueue.cpp",
 +    "ScreenDimensionManager.cpp",
-    "ScreenLuminance.cpp",
-    "ScreenOrientation.cpp",
-    "Selection.cpp",
-
+     "ScreenLuminance.cpp",
+     "ScreenOrientation.cpp",
+     "Selection.cpp",
+ 
 diff --git a/dom/base/nsGlobalWindowInner.cpp b/dom/base/nsGlobalWindowInner.cpp
 index 748ae6cf83..c3d4e5f6a7 100644
 --- a/dom/base/nsGlobalWindowInner.cpp
@@ -173,7 +173,7 @@ index 748ae6cf83..c3d4e5f6a7 100644
 @@ -7420,6 +7421,30 @@ nsGlobalWindowInner::GetAudioWorklet(ErrorResult& aRv) {
    return mAudioWorklet;
  }
-
+ 
 +void nsGlobalWindowInner::SetScreenDimensions(int32_t aWidth, int32_t aHeight,
 +                                              ErrorResult& aRv) {
 +  uint32_t userContextId = ScreenDimensionManager::GetUserContextIdFromWindow(this);
@@ -201,31 +201,31 @@ index 748ae6cf83..c3d4e5f6a7 100644
  Worklet* nsGlobalWindowInner::GetPaintWorklet(ErrorResult& aRv) {
    if (!mPaintWorklet) {
      nsIPrincipal* principal = GetPrincipal();
-
+ 
 diff --git a/dom/base/nsGlobalWindowInner.h b/dom/base/nsGlobalWindowInner.h
 index 3183172d29..d4e5f6a7b8 100644
 --- a/dom/base/nsGlobalWindowInner.h
 +++ b/dom/base/nsGlobalWindowInner.h
 @@ -750,6 +750,10 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
-
+ 
    Worklet* GetPaintWorklet(mozilla::ErrorResult& aRv);
-
+ 
 +  // Screen dimension methods for per-context screen spoofing
 +  void SetScreenDimensions(int32_t aWidth, int32_t aHeight, mozilla::ErrorResult& aRv);
 +  void SetScreenColorDepth(int32_t aColorDepth, mozilla::ErrorResult& aRv);
 +
    void GetRegionalPrefsLocales(nsTArray<nsString>& aLocales);
-
+ 
    void GetWebExposedLocales(nsTArray<nsString>& aLocales);
-
+ 
 diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
 index a6f0d96a36..b1c2d3e4f5 100644
 --- a/dom/webidl/Window.webidl
 +++ b/dom/webidl/Window.webidl
-@@ -892,6 +892,14 @@ partial interface Window {
-  readonly attribute VisualViewport visualViewport;
-};
-
+@@ -892,6 +892,15 @@ partial interface Window {
+   readonly attribute VisualViewport visualViewport;
+ };
+ 
 +// Screen dimension interface for per-context screen spoofing
 +partial interface Window {
 +  [Throws, Func="mozilla::dom::ScreenDimensionManager::IsFunctionEnabledForWebIDL"]
