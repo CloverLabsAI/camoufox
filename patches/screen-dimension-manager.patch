@@ -221,15 +221,18 @@ diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
 index a6f0d96a36..b1c2d3e4f5 100644
 --- a/dom/webidl/Window.webidl
 +++ b/dom/webidl/Window.webidl
-@@ -892,6 +892,15 @@ partial interface Window {
+@@ -892,6 +892,18 @@ partial interface Window {
    readonly attribute VisualViewport visualViewport;
  };
  
-+// Screen dimension interface for per-context screen spoofing
++// Screen dimension for per-context screen spoofing
 +partial interface Window {
 +  [Throws, Func="mozilla::dom::ScreenDimensionManager::IsFunctionEnabledForWebIDL"]
 +  undefined setScreenDimensions(long width, long height);
++};
 +
++// Screen color depth for per-context screen spoofing
++partial interface Window {
 +  [Throws, Func="mozilla::dom::ScreenDimensionManager::IsFunctionEnabledForWebIDL"]
 +  undefined setScreenColorDepth(long colorDepth);
 +};
