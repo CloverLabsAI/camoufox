@@ -96,7 +96,7 @@ new file mode 100644
 index 0000000000..2b3c4d5e6f
 --- /dev/null
 +++ b/dom/base/ScreenDimensionManager.h
-@@ -0,0 +1,39 @@
+@@ -0,0 +1,38 @@
 +/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 +/* This Source Code Form is subject to the terms of the Mozilla Public
@@ -107,9 +107,8 @@ index 0000000000..2b3c4d5e6f
 +#define mozilla_dom_ScreenDimensionManager_h
 +
 +#include "nsString.h"
++#include "js/TypeDecls.h"
 +
-+struct JSContext;
-+class JSObject;
 +class nsGlobalWindowInner;
 +
 +namespace mozilla {
