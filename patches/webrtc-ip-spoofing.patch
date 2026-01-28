@@ -3,11 +3,13 @@ new file mode 100644
 index 0000000000..94575f2631
 --- /dev/null
 +++ b/dom/base/WebRTCIPManager.cpp
-@@ -0,0 +1,218 @@
+@@ -0,0 +1,220 @@
 +#include "WebRTCIPManager.h"
 +#include "nsPrintfCString.h"
 +#include "nsGlobalWindowInner.h"
 +#include "xpcpublic.h"
++#include "mozilla/dom/Document.h"
++#include "nsDocShell.h"
 +
 +namespace mozilla {
 +namespace dom {
@@ -979,7 +981,7 @@ diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
 index 7c509eb87e..0a9010c2d1 100644
 --- a/dom/webidl/Window.webidl
 +++ b/dom/webidl/Window.webidl
-@@ -892,6 +892,12 @@ partial interface Window {
+@@ -892,6 +892,15 @@ partial interface Window {
    readonly attribute VisualViewport visualViewport;
  };
  
@@ -987,6 +989,9 @@ index 7c509eb87e..0a9010c2d1 100644
 +partial interface Window {
 +  [Throws, Func="mozilla::dom::WebRTCIPManager::IsIPv4FunctionEnabledForWebIDL"]
 +  undefined setWebRTCIPv4(DOMString ipv4);
++
++  [Throws, Func="mozilla::dom::WebRTCIPManager::IsIPv6FunctionEnabledForWebIDL"]
++  undefined setWebRTCIPv6(DOMString ipv6);
 +};
 +
  // Used to assign marks to appear on the scrollbar when
