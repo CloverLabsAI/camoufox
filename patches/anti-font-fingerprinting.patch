@@ -282,7 +282,7 @@ index 0000000000..d5700aea62
 +#define mozilla_dom_RoverfoxStorageManager_h
 +
 +#include "mozilla/Mutex.h"
-+#include "nsBaseHashtable.h"
++#include "nsTHashMap.h"
 +#include "nsString.h"
 +#include "nsHashKeys.h"
 +
