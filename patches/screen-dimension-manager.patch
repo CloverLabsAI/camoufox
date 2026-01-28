@@ -221,11 +221,11 @@ diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
 index a6f0d96a36..b1c2d3e4f5 100644
 --- a/dom/webidl/Window.webidl
 +++ b/dom/webidl/Window.webidl
-@@ -220,6 +220,18 @@ partial interface Window {
-   boolean confirm(optional DOMString message = "");
-   DOMString? prompt(optional DOMString message = "", optional DOMString default = "");
+@@ -886,8 +886,20 @@ partial interface Window {
+   [Throws, Func="IsChromeOrUAWidget"]
+   readonly attribute IntlUtils intlUtils;
  };
-+
+
 +// Screen dimension for per-context screen spoofing
 +partial interface Window {
 +  [Throws, Func="mozilla::dom::ScreenDimensionManager::IsFunctionEnabledForWebIDL"]
@@ -239,4 +239,7 @@ index a6f0d96a36..b1c2d3e4f5 100644
 +};
 +
  partial interface Window {
-   undefined print();
+   [SameObject, Replaceable]
+   readonly attribute VisualViewport visualViewport;
+ };
+
