@@ -59,7 +59,7 @@ index 0000000000..f47a35b2e3
 +    data[i] *= multiplier;
 +  }
 +}
-+
+
 +/* static */ bool
 +AudioFingerprintManager::IsFunctionEnabledForWebIDL(JSContext* aCx, JSObject* aObj) {
 +  nsGlobalWindowInner* win = xpc::WindowOrNull(aObj);
@@ -105,7 +105,7 @@ index 0000000000..535ce3a6f9
 +#endif  // mozilla_dom_AudioFingerprintManager_h
 
 diff --git a/dom/base/moz.build b/dom/base/moz.build
-index dc13a2b4ac..a1b2c3d4e5 100644
+index cd9090cda3..a1b2c3d4e5 100644
 --- a/dom/base/moz.build
 +++ b/dom/base/moz.build
 @@ -148,6 +148,7 @@ EXPORTS.mozilla.dom += [
@@ -158,7 +158,7 @@ index 748ae6cf83..b2c3d4e5f6 100644
    MOZ_ASSERT(mozilla::intl::LocaleService::GetInstance());
 
 diff --git a/dom/base/nsGlobalWindowInner.h b/dom/base/nsGlobalWindowInner.h
-index 3183172d29..c4d5e6f7g8 100644
+index 3183172d29..c4d5e6f7a8 100644
 --- a/dom/base/nsGlobalWindowInner.h
 +++ b/dom/base/nsGlobalWindowInner.h
 @@ -676,6 +676,9 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
@@ -225,13 +225,16 @@ diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
 index a6f0d96a36..b3c4d5e6f7 100644
 --- a/dom/webidl/Window.webidl
 +++ b/dom/webidl/Window.webidl
-@@ -520,6 +520,12 @@ partial interface Window {
-   [Throws, Func="mozilla::dom::FontSpacingSeedManager::IsFunctionEnabledForWebIDL"]
-   undefined setFontSpacingSeed(unsigned long seed);
- };
-+
+@@ -892,6 +892,13 @@ partial interface Window {
+  readonly attribute VisualViewport visualViewport;
+};
+
 +// Audio fingerprint seed for per-context audio fingerprinting
 +partial interface Window {
 +  [Throws, Func="mozilla::dom::AudioFingerprintManager::IsFunctionEnabledForWebIDL"]
 +  undefined setAudioFingerprintSeed(unsigned long seed);
 +};
++
+ // Used to assign marks to appear on the scrollbar when
+ // finding on a page.
+ partial interface Window {
