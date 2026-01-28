@@ -282,7 +282,7 @@ index 0000000000..d5700aea62
 +#define mozilla_dom_RoverfoxStorageManager_h
 +
 +#include "mozilla/Mutex.h"
-+#include "nsTHashMap.h"
++#include "nsBaseHashtable.h"
 +#include "nsString.h"
 +#include "nsHashKeys.h"
 +
@@ -601,7 +601,7 @@ diff --git a/gfx/src/nsFontMetrics.cpp b/gfx/src/nsFontMetrics.cpp
 index ef081ebe40..a921c49f43 100644
 --- a/gfx/src/nsFontMetrics.cpp
 +++ b/gfx/src/nsFontMetrics.cpp
-@@ -23,9 +23,11 @@
+@@ -23,9 +23,12 @@
  #include "nsStyleConsts.h"       // for StyleHyphens::None
  #include "mozilla/Assertions.h"  // for MOZ_ASSERT
  #include "mozilla/UniquePtr.h"   // for UniquePtr
@@ -610,17 +610,18 @@ index ef081ebe40..a921c49f43 100644
  
  class gfxUserFontSet;
  using namespace mozilla;
++using namespace mozilla::dom;
  
  namespace {
  
-@@ -35,17 +37,37 @@ class AutoTextRun {
+@@ -35,17 +38,37 @@ class AutoTextRun {
  
    AutoTextRun(const nsFontMetrics* aMetrics, DrawTarget* aDrawTarget,
                const char* aString, uint32_t aLength) {
 +    // Extract user context ID from PresContext document if available
 +    uint32_t userContextId = 0;
 +    if (aMetrics->mPresContext) {
-+      if (dom::Document* doc = aMetrics->mPresContext->Document()) {
++      if (Document* doc = aMetrics->mPresContext->Document()) {
 +        if (nsIPrincipal* principal = doc->NodePrincipal()) {
 +          const OriginAttributes& attrs = principal->OriginAttributesRef();
 +          userContextId = attrs.mUserContextId;
@@ -639,7 +640,7 @@ index ef081ebe40..a921c49f43 100644
 +    // Extract user context ID from PresContext document if available
 +    uint32_t userContextId = 0;
 +    if (aMetrics->mPresContext) {
-+      if (dom::Document* doc = aMetrics->mPresContext->Document()) {
++      if (Document* doc = aMetrics->mPresContext->Document()) {
 +        if (nsIPrincipal* principal = doc->NodePrincipal()) {
 +          const OriginAttributes& attrs = principal->OriginAttributesRef();
 +          userContextId = attrs.mUserContextId;
