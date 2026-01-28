@@ -601,7 +601,7 @@ diff --git a/gfx/src/nsFontMetrics.cpp b/gfx/src/nsFontMetrics.cpp
 index ef081ebe40..a921c49f43 100644
 --- a/gfx/src/nsFontMetrics.cpp
 +++ b/gfx/src/nsFontMetrics.cpp
-@@ -23,9 +23,12 @@
+@@ -23,9 +23,11 @@
  #include "nsStyleConsts.h"       // for StyleHyphens::None
  #include "mozilla/Assertions.h"  // for MOZ_ASSERT
  #include "mozilla/UniquePtr.h"   // for UniquePtr
@@ -610,10 +610,10 @@ index ef081ebe40..a921c49f43 100644
  
  class gfxUserFontSet;
  using namespace mozilla;
-
+ 
  namespace {
  
-@@ -35,17 +38,37 @@ class AutoTextRun {
+@@ -35,17 +37,37 @@ class AutoTextRun {
  
    AutoTextRun(const nsFontMetrics* aMetrics, DrawTarget* aDrawTarget,
                const char* aString, uint32_t aLength) {
@@ -633,7 +633,7 @@ index ef081ebe40..a921c49f43 100644
 -        nsTextFrameUtils::Flags(), nullptr);
 +        nsTextFrameUtils::Flags(), nullptr, userContextId);
    }
-
+ 
    AutoTextRun(const nsFontMetrics* aMetrics, DrawTarget* aDrawTarget,
                const char16_t* aString, uint32_t aLength) {
 +    // Extract user context ID from PresContext document if available
