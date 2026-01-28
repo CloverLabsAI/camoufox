@@ -610,8 +610,7 @@ index ef081ebe40..a921c49f43 100644
  
  class gfxUserFontSet;
  using namespace mozilla;
-+using namespace mozilla::dom;
- 
+
  namespace {
  
 @@ -35,17 +38,37 @@ class AutoTextRun {
@@ -621,7 +620,7 @@ index ef081ebe40..a921c49f43 100644
 +    // Extract user context ID from PresContext document if available
 +    uint32_t userContextId = 0;
 +    if (aMetrics->mPresContext) {
-+      if (Document* doc = aMetrics->mPresContext->Document()) {
++      if (dom::Document* doc = aMetrics->mPresContext->Document()) {
 +        if (nsIPrincipal* principal = doc->NodePrincipal()) {
 +          const OriginAttributes& attrs = principal->OriginAttributesRef();
 +          userContextId = attrs.mUserContextId;
@@ -634,13 +633,13 @@ index ef081ebe40..a921c49f43 100644
 -        nsTextFrameUtils::Flags(), nullptr);
 +        nsTextFrameUtils::Flags(), nullptr, userContextId);
    }
- 
+
    AutoTextRun(const nsFontMetrics* aMetrics, DrawTarget* aDrawTarget,
                const char16_t* aString, uint32_t aLength) {
 +    // Extract user context ID from PresContext document if available
 +    uint32_t userContextId = 0;
 +    if (aMetrics->mPresContext) {
-+      if (Document* doc = aMetrics->mPresContext->Document()) {
++      if (dom::Document* doc = aMetrics->mPresContext->Document()) {
 +        if (nsIPrincipal* principal = doc->NodePrincipal()) {
 +          const OriginAttributes& attrs = principal->OriginAttributesRef();
 +          userContextId = attrs.mUserContextId;
