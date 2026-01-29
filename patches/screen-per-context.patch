@@ -258,18 +258,20 @@ index 7f7728a6cc..a1b2c3d4e5 100644
  #include "nsContentUtils.h"
  #include "nsDeviceContext.h"
  #include "nsGlobalWindowInner.h"
-@@ -67,6 +68,24 @@ nsDeviceContext* nsScreen::GetDeviceContext() const {
+@@ -67,6 +68,26 @@ nsDeviceContext* nsScreen::GetDeviceContext() const {
  }
 
  CSSIntRect nsScreen::GetRect() {
 +  // Check for per-context screen dimensions first
-+  if (nsPIDOMWindowInner* owner = GetOwner()) {
-+    nsGlobalWindowInner* win = nsGlobalWindowInner::Cast(owner);
-+    if (win) {
-+      uint32_t userContextId = mozilla::dom::ScreenDimensionManager::GetUserContextIdFromWindow(win);
-+      int32_t w = 0, h = 0;
-+      if (mozilla::dom::ScreenDimensionManager::GetDimensions(userContextId, &w, &h)) {
-+        return {0, 0, w, h};
++  if (nsPIDOMWindowOuter* outer = GetOuter()) {
++    if (nsPIDOMWindowInner* inner = outer->GetCurrentInnerWindow()) {
++      nsGlobalWindowInner* win = nsGlobalWindowInner::Cast(inner);
++      if (win) {
++        uint32_t userContextId = mozilla::dom::ScreenDimensionManager::GetUserContextIdFromWindow(win);
++        int32_t w = 0, h = 0;
++        if (mozilla::dom::ScreenDimensionManager::GetDimensions(userContextId, &w, &h)) {
++          return {0, 0, w, h};
++        }
 +      }
 +    }
 +  }
