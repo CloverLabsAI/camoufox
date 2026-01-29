@@ -234,6 +234,6 @@ index a6f0d96a36..b3c4d5e6f7 100644
 +  undefined setAudioFingerprintSeed(unsigned long seed);
 +};
 +
- // Font spacing seed interface for privacy-preserving font fingerprinting
+ // Used to assign marks to appear on the scrollbar when
+ // finding on a page.
  partial interface Window {
-   [Throws, Func="mozilla::dom::FontSpacingSeedManager::IsFunctionEnabledForWebIDL"]

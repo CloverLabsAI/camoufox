@@ -90,7 +90,7 @@ index 0000000000..1a2b3c4d5e
 +
 +}  // namespace dom
 +}  // namespace mozilla
-
++
 diff --git a/dom/base/ScreenDimensionManager.h b/dom/base/ScreenDimensionManager.h
 new file mode 100644
 index 0000000000..2b3c4d5e6f
@@ -138,27 +138,23 @@ index 0000000000..2b3c4d5e6f
 +}  // namespace mozilla
 +
 +#endif  // mozilla_dom_ScreenDimensionManager_h
-
++
 diff --git a/dom/base/moz.build b/dom/base/moz.build
 index cd9090cda3..b2c3d4e5f6 100644
 --- a/dom/base/moz.build
 +++ b/dom/base/moz.build
-@@ -253,6 +253,7 @@ EXPORTS.mozilla.dom += [
-     "ResizeObserver.h",
+@@ -253,4 +253,5 @@ EXPORTS.mozilla.dom += [
      "ResponsiveImageSelector.h",
      "SameProcessMessageQueue.h",
 +    "ScreenDimensionManager.h",
      "ScreenLuminance.h",
      "ScreenOrientation.h",
-     "Selection.h",
-@@ -457,6 +458,7 @@ UNIFIED_SOURCES += [
-     "ResizeObserver.cpp",
+@@ -457,4 +458,5 @@ UNIFIED_SOURCES += [
      "ResponsiveImageSelector.cpp",
      "SameProcessMessageQueue.cpp",
 +    "ScreenDimensionManager.cpp",
      "ScreenLuminance.cpp",
      "ScreenOrientation.cpp",
-     "Selection.cpp",
 
 diff --git a/dom/base/nsGlobalWindowInner.cpp b/dom/base/nsGlobalWindowInner.cpp
 index 748ae6cf83..c3d4e5f6a7 100644
@@ -234,7 +230,7 @@ index a6f0d96a36..b1c2d3e4f5 100644
 +  [Throws, Func="mozilla::dom::ScreenDimensionManager::IsFunctionEnabledForWebIDL"]
 +  undefined setScreenDimensions(long width, long height);
 +};
-+
+
 +// Screen color depth for per-context screen spoofing
 +partial interface Window {
 +  [Throws, Func="mozilla::dom::ScreenDimensionManager::IsFunctionEnabledForWebIDL"]
@@ -245,4 +241,3 @@ index a6f0d96a36..b1c2d3e4f5 100644
    [SameObject, Replaceable]
    readonly attribute VisualViewport visualViewport;
  };
-
