@@ -90,7 +90,7 @@ index ea66d28e53..2abb83c3a6 100644
  #include "nsDocShell.h"
  #include "mozilla/OriginAttributes.h"
  #include "nsIDOMXULControlElement.h"
-@@ -7525,6 +7527,40 @@ void nsGlobalWindowInner::SetFontSpacingSeed(uint32_t seed, ErrorResult& aRv) {
+@@ -7525,6 +7527,37 @@ void nsGlobalWindowInner::SetFontSpacingSeed(uint32_t seed, ErrorResult& aRv) {
    }
  }
 
@@ -103,17 +103,15 @@ index ea66d28e53..2abb83c3a6 100644
 +    }
 +  }
 +
++  // Fallback to DocShell if principal returned 0
 +  if (userContextId == 0) {
 +    if (nsIDocShell* ds = GetDocShell()) {
 +      auto* concrete = static_cast<nsDocShell*>(ds);
-+      userContextId = concrete->GetOriginAttributes().mUserContextId;
++      uint32_t dsId = concrete->GetOriginAttributes().mUserContextId;
++      if (dsId != 0) userContextId = dsId;
 +    }
 +  }
-+
-+  if (userContextId == 0) {
-+    aRv.ThrowSecurityError("Unable to resolve user context ID for this context");
-+    return;
-+  }
++  // Note: userContextId == 0 is valid for default context
 +
 +  NS_LossyConvertUTF16toASCII timezoneASCII(timezone);
 +
@@ -125,7 +123,6 @@ index ea66d28e53..2abb83c3a6 100644
 +  }
 +
 +  TimezoneManager::SetTimezone(userContextId, timezone);
-+  nsJSUtils::SetTimeZoneOverride(timezoneASCII.get());
 +}
 +
  void nsGlobalWindowInner::StoreSharedWorker(SharedWorker* aSharedWorker) {
@@ -199,7 +196,7 @@ index 709cd2b90d..af5abb38be 100644
  int64_t js::DateTimeInfo::toClampedSeconds(int64_t milliseconds) {
    int64_t seconds = milliseconds / msPerSecond;
    int64_t millis = milliseconds % msPerSecond;
-@@ -587,6 +594,17 @@ JS_PUBLIC_API bool JS::SetTimeZoneOverride(const char* timeZoneId) {
+@@ -587,6 +594,18 @@ JS_PUBLIC_API bool JS::SetTimeZoneOverride(const char* timeZoneId) {
    return true;
  }
 
@@ -208,9 +205,10 @@ index 709cd2b90d..af5abb38be 100644
 +    return false;
 +  }
 +  JS::Realm* realm = js::GetContextRealm(cx);
-+  if (realm) {
-+    realm->setTimeZoneOverride(timeZoneId);
++  if (!realm) {
++    return false;
 +  }
++  realm->setTimeZoneOverride(timeZoneId);
 +  return true;
 +}
 +
@@ -233,7 +231,7 @@ diff --git a/js/src/vm/Realm.cpp b/js/src/vm/Realm.cpp
 index 81b4d13cdb..ca04167603 100644
 --- a/js/src/vm/Realm.cpp
 +++ b/js/src/vm/Realm.cpp
-@@ -545,10 +545,16 @@ void Realm::setLocaleOverride(const char* locale) {
+@@ -545,10 +545,15 @@ void Realm::setLocaleOverride(const char* locale) {
  }
 
  js::DateTimeInfo* Realm::getDateTimeInfo() {
@@ -245,9 +243,8 @@ index 81b4d13cdb..ca04167603 100644
 +#if JS_HAS_INTL_API
 +  RefPtr<JS::TimeZoneString> tzOverride = behaviors_.timeZoneOverride();
 +  if (tzOverride) {
-+    if (!dateTimeInfo_) {
-+      dateTimeInfo_ = js::MakeUnique<js::DateTimeInfo>(tzOverride->chars());
-+    }
++    // Always create fresh to handle timezone changes correctly
++    dateTimeInfo_ = js::MakeUnique<js::DateTimeInfo>(tzOverride->chars());
 +    return dateTimeInfo_.get();
 +  }
 +#endif
