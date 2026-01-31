@@ -3,11 +3,15 @@ new file mode 100644
 index 0000000000..94575f2631
 --- /dev/null
 +++ b/dom/base/WebRTCIPManager.cpp
-@@ -0,0 +1,218 @@
+@@ -0,0 +1,223 @@
 +#include "WebRTCIPManager.h"
 +#include "nsPrintfCString.h"
 +#include "nsGlobalWindowInner.h"
++#include "nsDocShell.h"
 +#include "xpcpublic.h"
++#include "mozilla/dom/BrowsingContext.h"
++#include "mozilla/dom/Document.h"
++#include "nsPIDOMWindow.h"
 +
 +namespace mozilla {
 +namespace dom {
