@@ -144,8 +144,8 @@ diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
 index 7a076768d0..a6f0d96a36 100644
 --- a/dom/webidl/Window.webidl
 +++ b/dom/webidl/Window.webidl
-@@ -898,6 +898,12 @@ partial interface Window {
-   undefined setFontSpacingSeed(unsigned long seed);
+@@ -892,6 +892,12 @@ partial interface Window {
+   readonly attribute VisualViewport visualViewport;
  };
 
 +// Timezone interface for per-context timezone spoofing
