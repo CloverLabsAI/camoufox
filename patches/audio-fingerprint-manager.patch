@@ -189,7 +189,7 @@ index f59d01944a..d21c86e030 100644
 
  namespace mozilla::dom {
 
-@@ -303,6 +304,23 @@ bool AudioBuffer::RestoreJSChannelData(JSContext* aJSContext) {
+@@ -303,5 +304,22 @@ bool AudioBuffer::RestoreJSChannelData(JSContext* aJSContext) {
        MOZ_ASSERT(!isShared);  // Was created as unshared above
        CopyChannelDataToFloat(mSharedChannels, i, 0, jsData, Length());
      }
@@ -213,7 +213,7 @@ index f59d01944a..d21c86e030 100644
      mJSChannels[i] = array;
    }
 
-@@ -376,6 +393,19 @@ void AudioBuffer::CopyFromChannel(const Float32Array& aDestination,
+@@ -376,5 +393,20 @@ void AudioBuffer::CopyFromChannel(const Float32Array& aDestination,
        [&](const Span<float>& aData, JS::AutoCheckCannotGC&&) {
          PodZero(aData.Elements(), calculateCount(aData.Length()));
        });
@@ -247,7 +247,7 @@ index a1b2c3d4e5..f6g7h8i9j0 100644
 
  namespace mozilla::dom {
 
-@@ -227,6 +228,17 @@ void AnalyserNode::GetFloatFrequencyData(const Float32Array& aArray) {
+@@ -227,5 +228,16 @@ void AnalyserNode::GetFloatFrequencyData(const Float32Array& aArray) {
        aData[i] = WebAudioUtils::ConvertLinearToDecibels(
            mOutputBuffer[i], -std::numeric_limits<float>::infinity());
      }
@@ -265,7 +265,7 @@ index a1b2c3d4e5..f6g7h8i9j0 100644
    });
  }
 
-@@ -253,6 +265,19 @@ void AnalyserNode::GetByteFrequencyData(const Uint8Array& aArray) {
+@@ -253,4 +265,17 @@ void AnalyserNode::GetByteFrequencyData(const Uint8Array& aArray) {
            uint8_t(std::max(0.0f, std::min(255.0f, scaled)));
      }
    });
@@ -285,7 +285,7 @@ index a1b2c3d4e5..f6g7h8i9j0 100644
  }
 
  void AnalyserNode::GetFloatTimeDomainData(const Float32Array& aArray) {
-@@ -260,6 +285,17 @@ void AnalyserNode::GetFloatTimeDomainData(const Float32Array& aArray) {
+@@ -260,5 +285,16 @@ void AnalyserNode::GetFloatTimeDomainData(const Float32Array& aArray) {
    aArray.ProcessData([&](const Span<float>& aData, JS::AutoCheckCannotGC&&) {
      size_t length = std::min(aData.Length(), size_t(mChunks[0].mDuration));
      GetTimeDomainData(aData.Elements(), length);
