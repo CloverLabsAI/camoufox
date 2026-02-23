@@ -47,13 +47,18 @@ class Patcher:
         """
         version, release = extract_args()
         with temp_cd(find_src_dir('.', version, release)):
-            # Reset to unpatched state first (like "Find broken patches")
-            print("Resetting to unpatched state...")
-            run('git clean -fdx && ./mach clobber && git reset --hard unpatched', exit_on_fail=False)
+            if os.path.isdir('.git'):
+                # Reset to unpatched state (development mode: local git repo exists)
+                print("Resetting to unpatched state...")
+                run('git clean -fdx && ./mach clobber && git reset --hard unpatched', exit_on_fail=False)
 
-            # Re-copy additions and settings after reset
-            print("Re-copying additions and settings...")
-            run(f'bash ../scripts/copy-additions.sh {version} {release}')
+                # Re-copy additions and settings after reset
+                print("Re-copying additions and settings...")
+                run(f'bash ../scripts/copy-additions.sh {version} {release}')
+            else:
+                # CI mode: make setup-minimal already ran copy-additions.sh on a
+                # fresh tarball extraction — no git repo present, nothing to reset.
+                print("No local .git repo (CI mode), skipping reset and re-copy")
 
             # Create the base mozconfig file
             run('cp -v ../assets/base.mozconfig mozconfig')
