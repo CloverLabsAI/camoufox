@@ -148,15 +148,24 @@ jobs:
 
           BRANCH="upgrade/firefox-${NEW_VERSION}"
 
-          git push origin --delete "$BRANCH" 2>/dev/null || true
+          gh label create "upgrade" \
+            --description "Firefox version upgrade" \
+            --color "16a34a" 2>/dev/null || true
+
+          # Check if an open PR already exists for this branch
+          EXISTING_PR=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING_PR" ]; then
+            echo "Open PR #$EXISTING_PR already exists for $BRANCH — skipping branch push."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
           git checkout -b "$BRANCH"
           git add upstream.sh
           git commit -m "upgrade: bump Firefox to ${NEW_VERSION} (${NEW_RELEASE})"
           git push origin "$BRANCH"
-
-          gh label create "upgrade" \
-            --description "Firefox version upgrade" \
-            --color "16a34a" 2>/dev/null || true
 
           BODY="## Firefox ${NEW_VERSION} upgrade\n\n"
           BODY+="All patches applied cleanly on \`${NEW_VERSION}\`.\n\n"

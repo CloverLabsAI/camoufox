@@ -38,6 +38,18 @@ jobs:
           LATEST_BETA_RAW=$(echo "$DETAILS" | jq -r '.LATEST_FIREFOX_RELEASED_DEVEL_VERSION')
           LATEST_BETA=$(echo "$LATEST_BETA_RAW" | sed 's/b[0-9]*//')
 
+          # Validate parsed values — jq returns literal "null" on missing keys
+          if [ -z "$LATEST_RELEASE" ] || [ "$LATEST_RELEASE" = "null" ]; then
+            echo "::error::Failed to parse LATEST_FIREFOX_VERSION from Mozilla API"
+            echo "Raw response: $DETAILS"
+            exit 1
+          fi
+          if [ -z "$LATEST_BETA_RAW" ] || [ "$LATEST_BETA_RAW" = "null" ] || [ -z "$LATEST_BETA" ]; then
+            echo "::error::Failed to parse LATEST_FIREFOX_RELEASED_DEVEL_VERSION from Mozilla API"
+            echo "Raw response: $DETAILS"
+            exit 1
+          fi
+
           echo "latest_release=$LATEST_RELEASE"     >> "$GITHUB_OUTPUT"
           echo "latest_beta=$LATEST_BETA"           >> "$GITHUB_OUTPUT"
           echo "latest_beta_raw=$LATEST_BETA_RAW"   >> "$GITHUB_OUTPUT"
