@@ -27,7 +27,7 @@ class VirtualDisplay:
         screen: Optional[str] = None,
     ) -> None:
         """
-        Constructor for the VirtualDisplay class (singleton object).
+        Constructor for the VirtualDisplay class.
 
         Parameters:
             debug: Print debug information.
