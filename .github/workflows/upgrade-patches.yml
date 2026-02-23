@@ -222,24 +222,32 @@ jobs:
           BODY+="---\n"
           BODY+="*Auto-detected on $(date -u +'%Y-%m-%d')*"
 
-          gh label create "patch-failure" \
-            --description "Patches broke on Firefox upgrade" \
-            --color "b91c1c" 2>/dev/null || true
+          # Print failure summary to workflow log (works even if issues are disabled)
+          printf '%b\n' "$BODY"
 
-          # Avoid duplicate issues for same version
-          EXISTING=$(gh issue list \
-            --label "patch-failure" \
-            --state open \
-            --json number,title \
-            --jq ".[] | select(.title | contains(\"${NEW_VERSION}\")) | .number" \
-            | head -1)
+          # Try to create/update an issue — gracefully skip if issues are disabled
+          ISSUES_ENABLED=$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.has_issues' 2>/dev/null || echo "false")
+          if [ "$ISSUES_ENABLED" = "true" ]; then
+            gh label create "patch-failure" \
+              --description "Patches broke on Firefox upgrade" \
+              --color "b91c1c" 2>/dev/null || true
 
-          if [ -n "$EXISTING" ]; then
-            echo "Adding comment to existing issue #$EXISTING"
-            gh issue comment "$EXISTING" --body "$(printf '%b' "$BODY")"
+            EXISTING=$(gh issue list \
+              --label "patch-failure" \
+              --state open \
+              --json number,title \
+              --jq ".[] | select(.title | contains(\"${NEW_VERSION}\")) | .number" \
+              | head -1)
+
+            if [ -n "$EXISTING" ]; then
+              echo "Adding comment to existing issue #$EXISTING"
+              gh issue comment "$EXISTING" --body "$(printf '%b' "$BODY")"
+            else
+              gh issue create \
+                --title "Patch failures for Firefox ${NEW_VERSION}" \
+                --body "$(printf '%b' "$BODY")" \
+                --label "patch-failure"
+            fi
           else
-            gh issue create \
-              --title "Patch failures for Firefox ${NEW_VERSION}" \
-              --body "$(printf '%b' "$BODY")" \
-              --label "patch-failure"
+            echo "Issues are disabled on this repo — failure details printed above and available in artifacts."
           fi
