@@ -1,0 +1,233 @@
+name: Upgrade Firefox Patches
+
+# Triggered manually or automatically from check-version.yml
+# when a new Firefox release is detected.
+#
+# Flow:
+#   1. Updates upstream.sh with the new version
+#   2. Downloads Firefox source tarball
+#   3. Extracts source and applies all patches/
+#   4. SUCCESS → opens PR with updated upstream.sh
+#   5. FAILURE → opens issue with which patches broke + .rej artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      new_version:
+        description: 'New Firefox version (e.g. 147.0.2)'
+        required: true
+      new_release:
+        description: 'Camoufox release tag for this version'
+        required: false
+        default: 'beta.1'
+
+jobs:
+  test-patches:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Maximize build space
+        uses: AdityaGarg8/remove-unwanted-software@v4.1
+        with:
+          remove-dotnet: "true"
+          remove-android: "true"
+          remove-haskell: "true"
+          remove-codeql: "true"
+          remove-docker-images: "true"
+          remove-cached-tools: "true"
+          remove-swapfile: "true"
+          verbose: "false"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y p7zip-full aria2 patch
+
+      - name: Update upstream.sh with new version
+        env:
+          NEW_VERSION: ${{ inputs.new_version }}
+          NEW_RELEASE: ${{ inputs.new_release }}
+        run: |
+          sed -i "s/^version=.*/version=$NEW_VERSION/" upstream.sh
+          sed -i "s/^release=.*/release=$NEW_RELEASE/" upstream.sh
+          echo "--- upstream.sh ---"
+          cat upstream.sh
+
+      - name: Ensure ~/.cargo/bin/rustup exists for patch.py
+        # patch.py calls ~/.cargo/bin/rustup target add directly (hardcoded path)
+        run: |
+          mkdir -p ~/.cargo/bin
+          RUSTUP_BIN=$(which rustup 2>/dev/null || true)
+          if [ -n "$RUSTUP_BIN" ] && [ ! -f ~/.cargo/bin/rustup ]; then
+            ln -sf "$RUSTUP_BIN" ~/.cargo/bin/rustup
+          fi
+          # Pre-add Linux cross-compile targets that patch.py requests
+          rustup target add aarch64-unknown-linux-gnu i686-unknown-linux-gnu || true
+
+      - name: Check disk space
+        run: df -h
+
+      - name: Fetch Firefox source tarball
+        # No CAMOUFOX_PASSWD → private patches are skipped (expected in CI)
+        run: make fetch
+
+      - name: Set up Firefox source tree
+        # 'make setup' creates git repo + unpatched tag inside camoufox-VERSION-RELEASE/
+        # patch.py needs 'git reset --hard unpatched' to work correctly
+        run: make setup
+
+      - name: Apply all patches
+        id: patches
+        env:
+          BUILD_TARGET: 'linux,x86_64'
+          NEW_VERSION: ${{ inputs.new_version }}
+          NEW_RELEASE: ${{ inputs.new_release }}
+        run: |
+          set +e
+          python3 scripts/patch.py "$NEW_VERSION" "$NEW_RELEASE" 2>&1 | tee patch-results.txt
+          PATCH_EXIT=${PIPESTATUS[0]}
+
+          echo "exit_code=$PATCH_EXIT" >> "$GITHUB_OUTPUT"
+
+          if [ "$PATCH_EXIT" -eq 0 ]; then
+            echo "result=success" >> "$GITHUB_OUTPUT"
+            echo "All patches applied successfully!"
+          else
+            echo "result=failure" >> "$GITHUB_OUTPUT"
+            # Extract list of failed patch files (lines ending with ':' after the error block)
+            FAILED=$(grep -E '^patches/.+:$' patch-results.txt | sed 's/:$//' | tr '\n' ' ' || true)
+            echo "failed_patches=$FAILED" >> "$GITHUB_OUTPUT"
+            echo "Failed: $FAILED"
+          fi
+
+      - name: Collect reject files
+        if: always()
+        env:
+          NEW_VERSION: ${{ inputs.new_version }}
+          NEW_RELEASE: ${{ inputs.new_release }}
+        run: |
+          mkdir -p rej-files
+          find "camoufox-${NEW_VERSION}-${NEW_RELEASE}" -name "*.rej" \
+            -exec cp --parents {} rej-files/ \; 2>/dev/null || true
+          echo "Reject files found:"
+          find rej-files -name "*.rej" 2>/dev/null || echo "(none)"
+
+      - name: Upload patch results and rejects
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: patch-results
+          path: |
+            patch-results.txt
+            rej-files/
+          if-no-files-found: ignore
+
+      # ── SUCCESS: all patches applied → open PR ──────────────────────────
+      - name: Create upgrade PR
+        if: steps.patches.outputs.result == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_VERSION: ${{ inputs.new_version }}
+          NEW_RELEASE: ${{ inputs.new_release }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="upgrade/firefox-${NEW_VERSION}"
+
+          git push origin --delete "$BRANCH" 2>/dev/null || true
+          git checkout -b "$BRANCH"
+          git add upstream.sh
+          git commit -m "upgrade: bump Firefox to ${NEW_VERSION} (${NEW_RELEASE})"
+          git push origin "$BRANCH"
+
+          gh label create "upgrade" \
+            --description "Firefox version upgrade" \
+            --color "16a34a" 2>/dev/null || true
+
+          BODY="## Firefox ${NEW_VERSION} upgrade\n\n"
+          BODY+="All patches applied cleanly on \`${NEW_VERSION}\`.\n\n"
+          BODY+="### Checklist before merge\n\n"
+          BODY+="- [ ] Verify \`.rej\` artifacts are empty (see workflow run)\n"
+          BODY+="- [ ] Run \`make dir\` locally to confirm\n"
+          BODY+="- [ ] After merge: create tag \`v${NEW_VERSION}-${NEW_RELEASE}\` to trigger build\n\n"
+          BODY+="---\n"
+          BODY+="*Auto-generated by [upgrade-patches](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})*"
+
+          gh pr create \
+            --title "Upgrade Firefox to ${NEW_VERSION} (${NEW_RELEASE})" \
+            --body "$(printf '%b' "$BODY")" \
+            --base main \
+            --head "$BRANCH" \
+            --label "upgrade"
+
+      # ── FAILURE: patches broke → open issue with details ────────────────
+      - name: Create patch failure issue
+        if: steps.patches.outputs.result == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_VERSION: ${{ inputs.new_version }}
+          FAILED_PATCHES: ${{ steps.patches.outputs.failed_patches }}
+        run: |
+          # Extract the structured failure block (between the ======= lines)
+          FAILURE_BLOCK=$(awk '/^={10,}/{p=!p; next} p' patch-results.txt || true)
+
+          BODY="## Patch failures for Firefox \`${NEW_VERSION}\`\n\n"
+          BODY+="The following patches failed to apply cleanly.\n\n"
+          BODY+="\`\`\`\n${FAILURE_BLOCK}\n\`\`\`\n\n"
+          BODY+="### How to fix (per WORKFLOW.md)\n\n"
+          BODY+="1. **Understand the stealth intent** — read the failed patch, what fingerprinting "
+          BODY+="vector does it protect?\n"
+          BODY+="2. **Find where Firefox moved the code** in \`${NEW_VERSION}\` using git history\n"
+          BODY+="3. **Edit the Firefox source** to achieve the same stealth goal in the new location\n"
+          BODY+="4. **Regenerate the patch** from inside the Firefox source dir:\n"
+          BODY+="   \`\`\`bash\n"
+          BODY+="   cd camoufox-${NEW_VERSION}-*/\n"
+          BODY+="   git diff > ../patches/<patch-name>.patch\n"
+          BODY+="   \`\`\`\n"
+          BODY+="5. **Test the fix:**\n"
+          BODY+="   \`\`\`bash\n"
+          BODY+="   make revert-checkpoint\n"
+          BODY+="   make patch patches/<patch-name>.patch\n"
+          BODY+="   \`\`\`\n"
+          BODY+="6. Commit the updated patch and push — re-run this workflow to verify\n\n"
+          BODY+="### Artifacts\n\n"
+          BODY+="Full logs + \`.rej\` files: "
+          BODY+="[workflow run](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})\n\n"
+          BODY+="---\n"
+          BODY+="*Auto-detected on $(date -u +'%Y-%m-%d')*"
+
+          gh label create "patch-failure" \
+            --description "Patches broke on Firefox upgrade" \
+            --color "b91c1c" 2>/dev/null || true
+
+          # Avoid duplicate issues for same version
+          EXISTING=$(gh issue list \
+            --label "patch-failure" \
+            --state open \
+            --json number,title \
+            --jq ".[] | select(.title | contains(\"${NEW_VERSION}\")) | .number" \
+            | head -1)
+
+          if [ -n "$EXISTING" ]; then
+            echo "Adding comment to existing issue #$EXISTING"
+            gh issue comment "$EXISTING" --body "$(printf '%b' "$BODY")"
+          else
+            gh issue create \
+              --title "Patch failures for Firefox ${NEW_VERSION}" \
+              --body "$(printf '%b' "$BODY")" \
+              --label "patch-failure"
+          fi

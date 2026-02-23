@@ -11,6 +11,7 @@ jobs:
     permissions:
       contents: read
       issues: write
+      actions: write        # нужно для gh workflow run (dispatch upgrade-patches)
 
     steps:
       - uses: actions/checkout@v4
@@ -31,9 +32,9 @@ jobs:
         run: |
           DETAILS=$(curl -fsSL "https://product-details.mozilla.org/1.0/firefox_versions.json")
 
-          # Стабильный релиз (e.g. "146.0.2")
+          # Стабильный релиз (e.g. "147.0.2")
           LATEST_RELEASE=$(echo "$DETAILS" | jq -r '.LATEST_FIREFOX_VERSION')
-          # Бета (e.g. "147.0b3" -> "147.0")
+          # Бета (e.g. "148.0b3" → "148.0")
           LATEST_BETA_RAW=$(echo "$DETAILS" | jq -r '.LATEST_FIREFOX_RELEASED_DEVEL_VERSION')
           LATEST_BETA=$(echo "$LATEST_BETA_RAW" | sed 's/b[0-9]*//')
 
@@ -45,7 +46,7 @@ jobs:
           echo "Latest release channel : $LATEST_RELEASE"
           echo "Latest beta channel    : $LATEST_BETA_RAW  (parsed: $LATEST_BETA)"
 
-      - name: Compare versions and create issue if outdated
+      - name: Compare versions and act
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CURRENT: ${{ steps.current.outputs.version }}
@@ -54,12 +55,13 @@ jobs:
           LATEST_BETA: ${{ steps.latest.outputs.latest_beta }}
           LATEST_BETA_RAW: ${{ steps.latest.outputs.latest_beta_raw }}
         run: |
-          # Возвращает 0 (true), если $1 > $2 по semantic versioning
           version_gt() {
             [ "$(printf '%s\n' "$1" "$2" | sort -V | tail -1)" != "$2" ]
           }
 
           NEEDS_UPDATE=false
+          UPDATE_TYPE=""
+          TITLE=""
 
           if version_gt "$LATEST_RELEASE" "$CURRENT"; then
             NEEDS_UPDATE=true
@@ -76,26 +78,31 @@ jobs:
             exit 0
           fi
 
-          echo "Update detected: $TITLE"
+          echo "Update detected [$UPDATE_TYPE]: $TITLE"
 
           BODY="## Firefox upstream update available\n\n"
           BODY+="| | Version |\n|---|---|\n"
           BODY+="| Current (\`upstream.sh\`) | \`$CURRENT\` |\n"
           BODY+="| Latest release | \`$LATEST_RELEASE\` |\n"
-          BODY+="| Latest beta | \`$LATEST_BETA_RAW\` |\n"
-          BODY+="\n### Что нужно сделать\n\n"
-          BODY+="1. Обновить \`upstream.sh\`: установить \`version=<new>\` и сбросить \`release=beta.1\`\n"
-          BODY+="2. Перебазировать патчи на новый Firefox source\n"
-          BODY+="3. Проверить C++ патчи (timezone, WebRTC, navigator)\n"
-          BODY+="4. Создать тег и запустить workflow \`Build and Release\`\n"
+          BODY+="| Latest beta | \`$LATEST_BETA_RAW\` |\n\n"
+
+          if [ "$UPDATE_TYPE" = "release" ]; then
+            BODY+="The **upgrade-patches** workflow has been dispatched automatically. "
+            BODY+="It will test whether all patches apply to \`$LATEST_RELEASE\` and open a PR or "
+            BODY+="a failure issue.\n"
+          else
+            BODY+="This is a beta channel update. Run the upgrade workflow manually if needed:\n"
+            BODY+="\`\`\`\ngh workflow run upgrade-patches.yml --field new_version=$LATEST_BETA_RAW\n\`\`\`\n"
+          fi
+
           BODY+="\n---\n*Автоматически обнаружено $(date -u +'%Y-%m-%d %H:%M UTC')*"
 
-          # Создать лейбл, если не существует
+          # Create label if needed
           gh label create "upstream-update" \
             --description "Firefox upstream version update required" \
             --color "e11d48" 2>/dev/null || true
 
-          # Проверить, нет ли уже открытого issue
+          # Open (or update) tracking issue
           EXISTING=$(gh issue list \
             --label "upstream-update" \
             --state open \
@@ -103,13 +110,22 @@ jobs:
             --jq '.[0].number // empty')
 
           if [ -n "$EXISTING" ]; then
-            echo "Issue #$EXISTING already open, adding comment."
-            gh issue comment "$EXISTING" \
-              --body "$(printf '%b' "$BODY")"
+            gh issue comment "$EXISTING" --body "$(printf '%b' "$BODY")"
+            echo "Updated issue #$EXISTING"
           else
             gh issue create \
               --title "$TITLE" \
               --body "$(printf '%b' "$BODY")" \
               --label "upstream-update"
             echo "Issue created."
+          fi
+
+          # For stable releases: automatically dispatch the upgrade workflow
+          # For beta: only create the issue (human decides when to upgrade)
+          if [ "$UPDATE_TYPE" = "release" ]; then
+            echo "Dispatching upgrade-patches.yml for $LATEST_RELEASE ..."
+            gh workflow run upgrade-patches.yml \
+              --field new_version="$LATEST_RELEASE" \
+              --field new_release="beta.1"
+            echo "Workflow dispatched."
           fi
