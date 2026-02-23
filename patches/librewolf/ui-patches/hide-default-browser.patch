@@ -2,7 +2,7 @@ diff --git a/browser/components/preferences/main.js b/browser/components/prefere
 index 46283d3..9e14d59 100644
 --- a/browser/components/preferences/main.js
 +++ b/browser/components/preferences/main.js
-@@ -1000,65 +1000,6 @@ const DefaultBrowserHelper = {
+@@ -1196,65 +1196,6 @@ const DefaultBrowserHelper = {
    },
  };
  
@@ -22,7 +22,7 @@ index 46283d3..9e14d59 100644
 -   * browser is already the default browser.
 -   */
 -  visible: () => DefaultBrowserHelper.canCheck,
--  disabled: (deps, setting) =>
+-  disabled: (_, setting) =>
 -    !DefaultBrowserHelper.canCheck ||
 -    setting.locked ||
 -    DefaultBrowserHelper.isBrowserDefault,
@@ -68,7 +68,7 @@ index 46283d3..9e14d59 100644
  // Performance settings
  Preferences.addSetting({
    id: "contentProcessCount",
-@@ -1141,31 +1082,6 @@ let SETTINGS_CONFIG = {
+@@ -1759,31 +1700,6 @@ SettingGroupManager.registerGroups({
          control: "moz-message-bar",
          l10nId: "startup-windows-launch-on-login-profile-disabled",
        },
@@ -90,8 +90,8 @@ index 46283d3..9e14d59 100644
 -            control: "moz-button",
 -            l10nId: "set-as-my-default-browser",
 -            id: "setDefaultButton",
+-            slot: "actions",
 -            controlAttrs: {
--              slot: "actions",
 -              type: "primary",
 -            },
 -          },
@@ -99,4 +99,4 @@ index 46283d3..9e14d59 100644
 -      },
      ],
    },
-   zoom: {
+   importBrowserData: {
