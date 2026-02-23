@@ -87,7 +87,10 @@ jobs:
       - name: Set up Firefox source tree
         # 'make setup' creates git repo + unpatched tag inside camoufox-VERSION-RELEASE/
         # patch.py needs 'git reset --hard unpatched' to work correctly
-        run: make setup
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          make setup
 
       - name: Apply all patches
         id: patches
