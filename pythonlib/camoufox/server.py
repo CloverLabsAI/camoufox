@@ -19,6 +19,8 @@ def camel_case(snake_str: str) -> str:
     if len(snake_str) < 2:
         return snake_str
     camel_case_str = ''.join(x.capitalize() for x in snake_str.lower().split('_'))
+    if not camel_case_str:
+        return snake_str
     return ("_" if snake_str[0] == "_" else "") + camel_case_str[0].lower() + camel_case_str[1:]
 
 

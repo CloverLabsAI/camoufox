@@ -265,16 +265,17 @@ diff --git a/dom/base/nsGlobalWindowOuter.cpp b/dom/base/nsGlobalWindowOuter.cpp
 index a1b2c3d4e5..f6g7h8i9j0 100644
 --- a/dom/base/nsGlobalWindowOuter.cpp
 +++ b/dom/base/nsGlobalWindowOuter.cpp
-@@ -86,6 +86,8 @@
+@@ -86,6 +86,9 @@
  #include "js/friend/WindowProxy.h"  // js::IsWindowProxy, js::SetWindowProxy
  #include "jsapi.h"
  #include "jsfriendapi.h"
 +#include "TimezoneManager.h"
 +#include "js/Date.h"
++#include "mozilla/dom/ScriptSettings.h"
  #include "mozilla/Likely.h"
  #include "mozilla/Preferences.h"
  #include "mozilla/SchedulerGroup.h"
-@@ -2480,6 +2482,22 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
+@@ -2480,6 +2482,24 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
    if (bc->IsOwnedByProcess()) {
      MOZ_ALWAYS_SUCCEEDS(bc->SetCurrentInnerWindowId(mInnerWindow->WindowID()));
    }
@@ -288,7 +289,9 @@ index a1b2c3d4e5..f6g7h8i9j0 100644
 +    }
 +    nsAutoString storedTimezone;
 +    if (mozilla::dom::TimezoneManager::GetTimezone(userContextId, storedTimezone)) {
-+      if (JSContext* cx = nsContentUtils::GetCurrentJSContext()) {
++      mozilla::dom::AutoJSAPI jsapi;
++      if (jsapi.Init(mInnerWindow)) {
++        JSContext* cx = jsapi.cx();
 +        NS_LossyConvertUTF16toASCII timezoneASCII(storedTimezone);
 +        JS::SetRealmTimeZoneOverride(cx, timezoneASCII.get());
 +      }
