@@ -111,40 +111,60 @@ class Patcher:
 
     def _apply_and_check(self, patch_file):
         """
-        Apply a patch and check for reject files.
-        Returns list of reject files if any, empty list otherwise.
+        Apply a patch and check for reject files or fatal patch errors.
+        Returns list of problem descriptors if any, empty list otherwise.
+
+        Exit code semantics for GNU patch:
+          0 — all hunks applied cleanly
+          1 — some hunks failed → .rej files created  (already-applied hunks
+              skipped via --forward also produce exit 1 but no .rej files,
+              which is not an error)
+          2 — fatal error (malformed patch syntax, missing target file, etc.)
+              → no .rej files are created, so we must check the exit code
         """
         import subprocess
         import os
+        import time
 
         print(f"\n*** -> patch -p1 -i {patch_file}")
         sys.stdout.flush()
 
-        # Apply patch interactively - don't capture stdout/stderr at all
-        # This allows prompts to show immediately and user can respond
-        # --forward flag: skip patches that appear to be already applied
-        # --binary flag: preserve line endings (helps with CRLF vs LF differences)
-        # -l flag: ignore whitespace differences
+        # Capture stderr so we can include it in failure reports, while still
+        # streaming stdout directly so progress is visible in CI logs.
         result = subprocess.run(
             ['patch', '-p1', '--forward', '-l', '--binary', '-i', patch_file],
             stdin=sys.stdin,
             stdout=sys.stdout,
-            stderr=sys.stderr,
+            stderr=subprocess.PIPE,
             text=True
         )
 
-        # After patch completes, search for any .rej files created
+        # Always print captured stderr so CI logs stay readable.
+        if result.stderr:
+            sys.stderr.write(result.stderr)
+            sys.stderr.flush()
+
+        # Collect .rej files created within the last 60 seconds (exit code 1).
         rejects = []
-        for root, dirs, files in os.walk('.'):
+        for root, _dirs, files in os.walk('.'):
             for file in files:
                 if file.endswith('.rej'):
-                    # Check if this is a newly created reject file
                     reject_path = os.path.join(root, file)
-                    # Only include if it was just created (within last minute)
                     if os.path.exists(reject_path):
-                        import time
                         if time.time() - os.path.getmtime(reject_path) < 60:
                             rejects.append(reject_path)
+
+        # Exit code 2 means a fatal patch error (malformed syntax, missing
+        # file, etc.).  No .rej is created, so we synthesise an entry so the
+        # problem shows up in the failure report.
+        if result.returncode == 2 and not rejects:
+            # Extract the first "malformed" / "can't open" line from stderr.
+            detail = next(
+                (ln.strip() for ln in result.stderr.splitlines()
+                 if ln.strip() and not ln.startswith('patching file')),
+                f"patch exited with code 2"
+            )
+            rejects.append(f"[fatal] {detail}")
 
         return rejects
 

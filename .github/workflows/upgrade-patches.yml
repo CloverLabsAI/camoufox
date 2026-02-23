@@ -217,8 +217,10 @@ jobs:
           BODY+="   \`\`\`\n"
           BODY+="6. Commit the updated patch and push — re-run this workflow to verify\n\n"
           BODY+="### Artifacts\n\n"
-          BODY+="Full logs + \`.rej\` files: "
+          BODY+="Full logs, \`.rej\` files, and malformed-patch details: "
           BODY+="[workflow run](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})\n\n"
+          BODY+="Failures prefixed with \`[fatal]\` are malformed-patch errors "
+          BODY+="(patch syntax mismatch — no \`.rej\` file, see \`patch-results.txt\` artifact).\n\n"
           BODY+="---\n"
           BODY+="*Auto-detected on $(date -u +'%Y-%m-%d')*"
 
