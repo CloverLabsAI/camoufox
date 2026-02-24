@@ -162,6 +162,9 @@ jobs:
             exit 0
           fi
 
+          # No open PR → safe to remove a stale branch from a previous failed run
+          git push origin --delete "$BRANCH" 2>/dev/null || true
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
