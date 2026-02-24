@@ -131,6 +131,7 @@ class Patcher:
 
         # Capture stderr so we can include it in failure reports, while still
         # streaming stdout directly so progress is visible in CI logs.
+        start_time = time.time()
         result = subprocess.run(
             ['patch', '-p1', '--forward', '-l', '--binary', '-i', patch_file],
             stdin=sys.stdin,
@@ -144,14 +145,16 @@ class Patcher:
             sys.stderr.write(result.stderr)
             sys.stderr.flush()
 
-        # Collect .rej files created within the last 60 seconds (exit code 1).
+        # Collect .rej files created DURING this specific patch run.
+        # Use start_time instead of a fixed 60-second window to avoid
+        # attributing .rej files from earlier patches to this one.
         rejects = []
         for root, _dirs, files in os.walk('.'):
             for file in files:
                 if file.endswith('.rej'):
                     reject_path = os.path.join(root, file)
                     if os.path.exists(reject_path):
-                        if time.time() - os.path.getmtime(reject_path) < 60:
+                        if os.path.getmtime(reject_path) >= start_time:
                             rejects.append(reject_path)
 
         # Exit code 2 means a fatal patch error (malformed syntax, missing

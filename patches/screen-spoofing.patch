@@ -254,7 +254,7 @@ diff --git a/dom/base/nsGlobalWindowInner.h b/dom/base/nsGlobalWindowInner.h
 index 3183172d29..d4e5f6a7b8 100644
 --- a/dom/base/nsGlobalWindowInner.h
 +++ b/dom/base/nsGlobalWindowInner.h
-@@ -750,7 +750,11 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
+@@ -676,7 +676,11 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
 
    Worklet* GetPaintWorklet(mozilla::ErrorResult& aRv);
 
@@ -336,7 +336,7 @@ diff --git a/gfx/src/moz.build b/gfx/src/moz.build
 index a2b3e60fe5..faa0c113bc 100644
 --- a/gfx/src/moz.build
 +++ b/gfx/src/moz.build
-@@ -95,4 +95,7 @@ FINAL_LIBRARY = "xul"
+@@ -95,3 +95,6 @@ FINAL_LIBRARY = "xul"
  if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
      CXXFLAGS += CONFIG["MOZ_GTK3_CFLAGS"]
      CXXFLAGS += CONFIG["MOZ_PANGO_CFLAGS"]
@@ -381,7 +381,7 @@ index f83e2c21ca..5362dd77d4 100644
  #include "nsIBaseWindow.h"
  #include "nsIDocShell.h"
  #include "nsIPrintSettings.h"
-@@ -66,14 +68,18 @@ static nsSize GetDeviceSize(const Document& aDocument) {
+@@ -66,23 +68,18 @@ static nsSize GetDeviceSize(const Document& aDocument) {
      return GetSize(aDocument);
    }
 
@@ -391,6 +391,15 @@ index f83e2c21ca..5362dd77d4 100644
 -      nsGlobalWindowOuter::GetRDMDeviceSize(aDocument);
 -  if (deviceSize.isSome()) {
 -    return CSSPixel::ToAppUnits(deviceSize.value());
+-  }
+-
+-  // Media queries in documents should use an override set with WebDriver BiDi
+-  // if it exists.
+-  if (dom::BrowsingContext* bc = aDocument.GetBrowsingContext()) {
+-    Maybe<CSSIntSize> screenSize = bc->GetScreenAreaOverride();
+-    if (screenSize.isSome()) {
+-      return CSSPixel::ToAppUnits(screenSize.value());
+-    }
 -  }
 -
 +  // Camoufox: per-context screen dimensions for CSS device-width/height queries

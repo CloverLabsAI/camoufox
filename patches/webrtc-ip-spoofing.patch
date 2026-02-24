@@ -295,10 +295,11 @@ index cd9090cda3..93cea20206 100644
      "WindowFeatures.h",
      "WindowProxyHolder.h",
  ]
-@@ -326,4 +327,12 @@ SOURCES += [
-     "nsWindowSizes.cpp",
- ]
+@@ -541,3 +541,11 @@ SOURCES += ["AudioFingerprintManager.cpp"]
+ SOURCES += ["AudioFingerprintManager.cpp"]
 
+ # Are we targeting x86-32 or x86-64?  If so, we want to include SSE2 code for
++
 +# WebRTCIPManager compiled separately to avoid unified build errors
 +# (it includes RoverfoxStorageManager.h which causes template issues)
 +SOURCES += ["WebRTCIPManager.cpp"]
@@ -307,7 +308,6 @@ index cd9090cda3..93cea20206 100644
 +    "RoverfoxStorageManager.cpp",
 +]
 +
- UNIFIED_SOURCES += [
 diff --git a/dom/base/nsGlobalWindowInner.cpp b/dom/base/nsGlobalWindowInner.cpp
 index 330a707789..4f87317dbb 100644
 --- a/dom/base/nsGlobalWindowInner.cpp

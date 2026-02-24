@@ -156,8 +156,8 @@ index cd9090cda3..a1b2c3d4e5 100644
      "AutoPrintEventDispatcher.h",
      "AutoSuppressEventHandlingAndSuspend.h",
      "BarProps.h",
-@@ -326,4 +326,9 @@ SOURCES += [
-     "nsWindowSizes.cpp",
+@@ -534,4 +534,9 @@ SOURCES += [
+     "nsPluginArray.cpp",
  ]
 
 +# AudioFingerprintManager compiled separately to avoid namespace pollution
@@ -165,7 +165,7 @@ index cd9090cda3..a1b2c3d4e5 100644
 +# alphabetically-later files like BarProps.cpp)
 +SOURCES += ["AudioFingerprintManager.cpp"]
 +
- UNIFIED_SOURCES += [
+ # Are we targeting x86-32 or x86-64?  If so, we want to include SSE2 code for
 diff --git a/dom/base/nsGlobalWindowInner.cpp b/dom/base/nsGlobalWindowInner.cpp
 index 748ae6cf83..b2c3d4e5f6 100644
 --- a/dom/base/nsGlobalWindowInner.cpp
@@ -274,30 +274,31 @@ index f59d01944a..d21c86e030 100644
      mJSChannels[i] = array;
    }
 
-@@ -373,6 +401,24 @@ void AudioBuffer::CopyFromChannel(const Float32Array& aDestination,
-   aDestination.ProcessData([&](const Span<float>& aData, JS::AutoCheckCannotGC&&) {
-     CopyChannelDataToFloat(data, aChannelNumber, aBufferOffset, aData.Elements(),
-                            length);
+@@ -353,6 +353,24 @@ void AudioBuffer::CopyFromChannel(const Float32Array& aDestination,
+     aDestination.ProcessData([&](const Span<float>& aData,
+                                  JS::AutoCheckCannotGC&&) {
+       CopyChannelDataToFloat(mSharedChannels, aChannelNumber, aBufferOffset,
+                              aData.Elements(), calculateCount(aData.Length()));
 +
-+    // Apply audio fingerprint transformation after copying
-+    nsPIDOMWindowInner* global = GetParentObject();
-+    if (global) {
-+      // Get userContextId from window's document principal
-+      uint32_t userContextId = 0;
-+      Document* doc = global->GetExtantDoc();
-+      if (doc) {
-+        nsIPrincipal* principal = doc->NodePrincipal();
-+        if (principal) {
-+          userContextId = principal->GetUserContextId();
++      // Apply audio fingerprint transformation after copying
++      nsPIDOMWindowInner* global = GetParentObject();
++      if (global) {
++        // Get userContextId from window's document principal
++        uint32_t userContextId = 0;
++        Document* doc = global->GetExtantDoc();
++        if (doc) {
++          nsIPrincipal* principal = doc->NodePrincipal();
++          if (principal) {
++            userContextId = principal->GetUserContextId();
++          }
++        }
++        uint32_t seed = AudioFingerprintManager::GetSeed(userContextId);
++        if (seed != 0) {
++          AudioFingerprintManager::ApplyTransformation(aData.Elements(), length, seed);
 +        }
 +      }
-+      uint32_t seed = AudioFingerprintManager::GetSeed(userContextId);
-+      if (seed != 0) {
-+        AudioFingerprintManager::ApplyTransformation(aData.Elements(), length, seed);
-+      }
-+    }
-   });
- }
+     });
+     return;
 
 diff --git a/dom/media/webaudio/AnalyserNode.cpp b/dom/media/webaudio/AnalyserNode.cpp
 index 4fd7c8be9a..e5f6a7b8c9 100644
