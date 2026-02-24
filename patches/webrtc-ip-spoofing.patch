@@ -287,17 +287,13 @@ index cd9090cda3..93cea20206 100644
      "WindowFeatures.h",
      "WindowProxyHolder.h",
  ]
-@@ -547,3 +547,12 @@
+@@ -547,3 +547,8 @@
      SOURCES["CharacterDataBufferVMX.cpp"].flags += CONFIG["PPC_VMX_FLAGS"]
 
 +
 +# WebRTCIPManager compiled separately to avoid unified build errors
 +# (it includes RoverfoxStorageManager.h which causes template issues)
 +SOURCES += ["WebRTCIPManager.cpp"]
-+
-+UNIFIED_SOURCES += [
-+    "RoverfoxStorageManager.cpp",
-+]
 +
  EXTRA_JS_MODULES += [
 diff --git a/dom/base/nsGlobalWindowInner.cpp b/dom/base/nsGlobalWindowInner.cpp
