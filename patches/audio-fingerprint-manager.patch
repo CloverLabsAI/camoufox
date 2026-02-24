@@ -417,12 +417,16 @@ diff --git a/dom/media/webaudio/moz.build b/dom/media/webaudio/moz.build
 index 3ee8c0aa76..4cf10f3039 100644
 --- a/dom/media/webaudio/moz.build
 +++ b/dom/media/webaudio/moz.build
-@@ -155,2 +155,5 @@ include("/ipc/chromium/chromium-config.mozbuild")
+@@ -155,5 +155,8 @@ include("/ipc/chromium/chromium-config.mozbuild")
  FINAL_LIBRARY = "xul"
  LOCAL_INCLUDES += [".."]
-+
+
 +# AudioFingerprintManager in dom/base
 +LOCAL_INCLUDES += ["/dom/base"]
++
+ # DOM Mask
+ LOCAL_INCLUDES += ["/camoucfg"]
+\ No newline at end of file
 diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
 index 7c509eb87e..7a076768d1 100644
 --- a/dom/webidl/Window.webidl
