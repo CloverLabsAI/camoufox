@@ -279,16 +279,7 @@ diff --git a/dom/base/moz.build b/dom/base/moz.build
 index cd9090cda3..93cea20206 100644
 --- a/dom/base/moz.build
 +++ b/dom/base/moz.build
-@@ -255,7 +255,8 @@ EXPORTS.mozilla.dom += [
-     "RequestCallbackManager.h",
-     "ResizeObserver.h",
-     "ResponsiveImageSelector.h",
-+    "RoverfoxStorageManager.h",
-     "SameProcessMessageQueue.h",
-     "ScreenDimensionManager.h",
-     "ScreenLuminance.h",
-     "ScreenOrientation.h",
-@@ -289,6 +290,7 @@ EXPORTS.mozilla.dom += [
+@@ -289,6 +289,7 @@ EXPORTS.mozilla.dom += [
      "VideoFrameProvider.h",
      "ViewportMetaData.h",
      "VisualViewport.h",
@@ -296,10 +287,9 @@ index cd9090cda3..93cea20206 100644
      "WindowFeatures.h",
      "WindowProxyHolder.h",
  ]
-@@ -541,3 +541,11 @@ SOURCES += ["AudioFingerprintManager.cpp"]
- SOURCES += ["AudioFingerprintManager.cpp"]
+@@ -547,3 +547,12 @@
+     SOURCES["CharacterDataBufferVMX.cpp"].flags += CONFIG["PPC_VMX_FLAGS"]
 
- # Are we targeting x86-32 or x86-64?  If so, we want to include SSE2 code for
 +
 +# WebRTCIPManager compiled separately to avoid unified build errors
 +# (it includes RoverfoxStorageManager.h which causes template issues)
@@ -309,6 +299,7 @@ index cd9090cda3..93cea20206 100644
 +    "RoverfoxStorageManager.cpp",
 +]
 +
+ EXTRA_JS_MODULES += [
 diff --git a/dom/base/nsGlobalWindowInner.cpp b/dom/base/nsGlobalWindowInner.cpp
 index 330a707789..4f87317dbb 100644
 --- a/dom/base/nsGlobalWindowInner.cpp
