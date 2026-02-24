@@ -139,7 +139,7 @@ index xxxxxxxxxx..yyyyyyyyyy 100644
 +#include "WebGLParamsManager.h"
  #include "WindowDestroyedEvent.h"
  #include "WindowNamedPropertiesHandler.h"
-@@ -7477,6 +7478,38 @@
+@@ -7477,6 +7478,44 @@
    mSharedWorkers.RemoveElement(aSharedWorker);
  }
 
@@ -639,7 +639,7 @@ diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
 index xxxxxxxxxx..yyyyyyyyyy 100644
 --- a/dom/webidl/Window.webidl
 +++ b/dom/webidl/Window.webidl
-@@ -900,6 +900,18 @@
+@@ -900,7 +900,19 @@
    undefined setScrollMarks(sequence<unsigned long> marks,
                             optional boolean onHorizontalScrollbar = false);
  };

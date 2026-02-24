@@ -3,7 +3,7 @@ new file mode 100644
 index 0000000000..94575f2631
 --- /dev/null
 +++ b/dom/base/WebRTCIPManager.cpp
-@@ -0,0 +1,234 @@
+@@ -0,0 +1,160 @@
 +#include "WebRTCIPManager.h"
 +#include "MaskConfig.hpp"
 +#include "RoverfoxStorageManager.h"
@@ -323,7 +323,7 @@ index 330a707789..4f87317dbb 100644
  #ifdef NS_PRINTING
  #  include "nsIPrintSettings.h"
  #endif
-@@ -7463,6 +7467,42 @@ IntlUtils* nsGlobalWindowInner::GetIntlUtils(ErrorResult& aError) {
+@@ -7463,6 +7467,48 @@ IntlUtils* nsGlobalWindowInner::GetIntlUtils(ErrorResult& aError) {
    return mIntlUtils;
  }
 
@@ -462,7 +462,7 @@ index ca237977cd..abfc081ae7 100644
                RefPtr<RTCStatsReport> report(new RTCStatsReport(window));
                report->Incorporate(*aReport);
                promise->MaybeResolve(std::move(report));
-@@ -3229,12 +3286,22 @@ const std::string& PeerConnectionImpl::GetName() {
+@@ -3229,12 +3286,15 @@ const std::string& PeerConnectionImpl::GetName() {
    return mName;
  }
 

@@ -266,7 +266,7 @@ index abcdef1234..5678901234 100644
  #include "AudioChannelService.h"
  #include "AutoplayPolicy.h"
  #include "Crypto.h"
-@@ -7477,6 +7478,51 @@
+@@ -7477,6 +7478,60 @@
    mSharedWorkers.RemoveElement(aSharedWorker);
  }
  
@@ -385,7 +385,7 @@ index abcdef1234..5678901234 100644
      "NodeInfo.h",
      "NodeInfoInlines.h",
      "NodeIterator.h",
-@@ -326,4 +327,8 @@ SOURCES += [
+@@ -326,5 +327,9 @@ SOURCES += [
      "nsWindowSizes.cpp",
  ]
 
@@ -425,7 +425,7 @@ index 622724b529..35e436cd16 100644
    if (auto value = MaskConfig::GetString("navigator.platform"))
      return aPlatform.Assign(NS_ConvertUTF8toUTF16(value.value()));
    WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
-@@ -242,6 +256,17 @@
+@@ -242,7 +256,18 @@
  }
 
  uint64_t WorkerNavigator::HardwareConcurrency() const {

@@ -124,7 +124,7 @@ index ea66d28e53..2abb83c3a6 100644
  #include "nsDocShell.h"
  #include "mozilla/OriginAttributes.h"
  #include "nsIDOMXULControlElement.h"
-@@ -7525,6 +7527,32 @@ void nsGlobalWindowInner::SetFontSpacingSeed(uint32_t seed, ErrorResult& aRv) {
+@@ -7525,6 +7527,37 @@ void nsGlobalWindowInner::SetFontSpacingSeed(uint32_t seed, ErrorResult& aRv) {
    }
  }
 
@@ -314,7 +314,7 @@ index fb4c0657ba..1b18d87681 100644
  #include "unicode/uenum.h"
  #if MOZ_INTL_USE_ICU_CPP_TIMEZONE
  #  include "unicode/basictz.h"
-@@ -21,7 +22,14 @@ Result<UniquePtr<TimeZone>, ICUError> TimeZone::TryCreate(
+@@ -21,7 +22,13 @@ Result<UniquePtr<TimeZone>, ICUError> TimeZone::TryCreate(
      Maybe<Span<const char>> aTimeZoneOverride) {
    const char* zoneID = nullptr;
    int32_t zoneIDLen = 0;

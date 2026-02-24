@@ -47,7 +47,7 @@ index 9c94cb8808..af2dbdbf3f 100644
  #    endif
        ;
    rv = NS_NewNativeLocalFile(dirname, getter_AddRefs(localDir));
-@@ -405,14 +407,21 @@
+@@ -405,14 +407,22 @@
  #if defined(XP_UNIX) || defined(XP_MACOSX)
    } else if (!strcmp(aProperty, XRE_SYS_NATIVE_MANIFESTS)) {
      rv = ::GetSystemParentDirectory(getter_AddRefs(file));

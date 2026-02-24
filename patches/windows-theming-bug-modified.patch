@@ -2,7 +2,7 @@ diff --git a/browser/app/Makefile.in b/browser/app/Makefile.in
 index d11c35ff9d..0aa4b9058b 100644
 --- a/browser/app/Makefile.in
 +++ b/browser/app/Makefile.in
-@@ -21,6 +21,13 @@
+@@ -21,4 +21,11 @@
  PROGRAMS_DEST = $(DIST)/bin
  objdir = $(topobjdir)/browser/app
 

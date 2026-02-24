@@ -175,7 +175,7 @@ index cd9090cda3..b2c3d4e5f6 100644
      "ScreenLuminance.h",
      "ScreenOrientation.h",
      "Selection.h",
-@@ -460,6 +461,7 @@ UNIFIED_SOURCES += [
+@@ -460,7 +461,8 @@ UNIFIED_SOURCES += [
      "ResizeObserver.cpp",
      "ResponsiveImageSelector.cpp",
      "SameProcessMessageQueue.cpp",
@@ -196,7 +196,7 @@ index 748ae6cf83..c3d4e5f6a7 100644
  #include "nsIThread.h"
  #include "nsITimedChannel.h"
  #include "nsIURI.h"
-@@ -7420,7 +7421,49 @@ nsGlobalWindowInner::GetAudioWorklet(ErrorResult& aRv) {
+@@ -7420,7 +7421,53 @@ nsGlobalWindowInner::GetAudioWorklet(ErrorResult& aRv) {
    return mAudioWorklet;
  }
 
@@ -254,7 +254,7 @@ diff --git a/dom/base/nsGlobalWindowInner.h b/dom/base/nsGlobalWindowInner.h
 index 3183172d29..d4e5f6a7b8 100644
 --- a/dom/base/nsGlobalWindowInner.h
 +++ b/dom/base/nsGlobalWindowInner.h
-@@ -750,6 +750,10 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
+@@ -750,7 +750,11 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
 
    Worklet* GetPaintWorklet(mozilla::ErrorResult& aRv);
 
@@ -270,7 +270,7 @@ diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
 index a6f0d96a36..b1c2d3e4f5 100644
 --- a/dom/webidl/Window.webidl
 +++ b/dom/webidl/Window.webidl
-@@ -886,6 +886,18 @@ partial interface Window {
+@@ -886,9 +886,21 @@ partial interface Window {
    [Throws, Func="IsChromeOrUAWidget"]
    readonly attribute IntlUtils intlUtils;
  };
@@ -304,7 +304,7 @@ index 7f7728a6cc..a1b2c3d4e5 100644
  #include "nsContentUtils.h"
  #include "nsDeviceContext.h"
  #include "nsGlobalWindowInner.h"
-@@ -67,6 +68,26 @@ nsDeviceContext* nsScreen::GetDeviceContext() const {
+@@ -67,7 +68,27 @@ nsDeviceContext* nsScreen::GetDeviceContext() const {
  }
 
  CSSIntRect nsScreen::GetRect() {
@@ -336,7 +336,7 @@ diff --git a/gfx/src/moz.build b/gfx/src/moz.build
 index a2b3e60fe5..faa0c113bc 100644
 --- a/gfx/src/moz.build
 +++ b/gfx/src/moz.build
-@@ -95,3 +95,6 @@ FINAL_LIBRARY = "xul"
+@@ -95,4 +95,7 @@ FINAL_LIBRARY = "xul"
  if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
      CXXFLAGS += CONFIG["MOZ_GTK3_CFLAGS"]
      CXXFLAGS += CONFIG["MOZ_PANGO_CFLAGS"]

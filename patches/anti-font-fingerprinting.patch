@@ -405,7 +405,7 @@ index 330a707789..fb3ba4d3fb 100644
  #include "nsIDOMXULControlElement.h"
  #include "nsIDeviceSensors.h"
  #include "nsIDocShell.h"
-@@ -7463,6 +7467,23 @@ IntlUtils* nsGlobalWindowInner::GetIntlUtils(ErrorResult& aError) {
+@@ -7463,6 +7467,25 @@ IntlUtils* nsGlobalWindowInner::GetIntlUtils(ErrorResult& aError) {
    return mIntlUtils;
  }
  
