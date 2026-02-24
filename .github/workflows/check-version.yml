@@ -109,27 +109,35 @@ jobs:
 
           BODY+="\n---\n*Автоматически обнаружено $(date -u +'%Y-%m-%d %H:%M UTC')*"
 
-          # Create label if needed
-          gh label create "upstream-update" \
-            --description "Firefox upstream version update required" \
-            --color "e11d48" 2>/dev/null || true
+          # Always print update info to workflow log (visible even without issues)
+          printf '%b\n' "$BODY"
 
-          # Open (or update) tracking issue
-          EXISTING=$(gh issue list \
-            --label "upstream-update" \
-            --state open \
-            --json number \
-            --jq '.[0].number // empty')
+          ISSUES_ENABLED=$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.has_issues' 2>/dev/null || echo "false")
+          if [ "$ISSUES_ENABLED" = "true" ]; then
+            # Create label if needed
+            gh label create "upstream-update" \
+              --description "Firefox upstream version update required" \
+              --color "e11d48" 2>/dev/null || true
 
-          if [ -n "$EXISTING" ]; then
-            gh issue comment "$EXISTING" --body "$(printf '%b' "$BODY")"
-            echo "Updated issue #$EXISTING"
+            # Open (or update) tracking issue
+            EXISTING=$(gh issue list \
+              --label "upstream-update" \
+              --state open \
+              --json number \
+              --jq '.[0].number // empty')
+
+            if [ -n "$EXISTING" ]; then
+              gh issue comment "$EXISTING" --body "$(printf '%b' "$BODY")"
+              echo "Updated issue #$EXISTING"
+            else
+              gh issue create \
+                --title "$TITLE" \
+                --body "$(printf '%b' "$BODY")" \
+                --label "upstream-update"
+              echo "Issue created."
+            fi
           else
-            gh issue create \
-              --title "$TITLE" \
-              --body "$(printf '%b' "$BODY")" \
-              --label "upstream-update"
-            echo "Issue created."
+            echo "Issues are disabled on this repo — update details printed above."
           fi
 
           # For stable releases: automatically dispatch the upgrade workflow
