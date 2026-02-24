@@ -238,14 +238,12 @@ new file mode 100644
 index 0000000000..d5700aea62
 --- /dev/null
 +++ b/dom/base/RoverfoxStorageManager.h
-@@ -0,0 +1,112 @@
+@@ -0,0 +1,110 @@
 +#ifndef mozilla_dom_RoverfoxStorageManager_h
 +#define mozilla_dom_RoverfoxStorageManager_h
 +
 +#include "mozilla/Mutex.h"
-+#include "nsBaseHashtable.h"
-+#include "nsString.h"
-+#include "nsHashKeys.h"
++#include "nsTHashMap.h"
 +
 +namespace mozilla {
 +namespace dom {
