@@ -167,7 +167,8 @@ jobs:
 
           git checkout -b "$BRANCH"
           git add upstream.sh
-          git commit -m "upgrade: bump Firefox to ${NEW_VERSION} (${NEW_RELEASE})"
+          # Only commit if upstream.sh actually changed (skip on re-runs for same version)
+          git diff --staged --quiet || git commit -m "upgrade: bump Firefox to ${NEW_VERSION} (${NEW_RELEASE})"
           git push origin "$BRANCH"
 
           BODY="## Firefox ${NEW_VERSION} upgrade\n\n"
