@@ -168,10 +168,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git checkout -b "$BRANCH"
           git add upstream.sh
-          # Only commit if upstream.sh actually changed (skip on re-runs for same version)
-          git diff --staged --quiet || git commit -m "upgrade: bump Firefox to ${NEW_VERSION} (${NEW_RELEASE})"
+          if git diff --staged --quiet; then
+            # upstream.sh already at this version — patches verified, no bump needed
+            # (only happens when re-running for a version already in upstream.sh)
+            echo "upstream.sh already at ${NEW_VERSION}/${NEW_RELEASE} — no PR needed."
+            exit 0
+          fi
+
+          git checkout -b "$BRANCH"
+          git commit -m "upgrade: bump Firefox to ${NEW_VERSION} (${NEW_RELEASE})"
           git push origin "$BRANCH"
 
           BODY="## Firefox ${NEW_VERSION} upgrade\n\n"
