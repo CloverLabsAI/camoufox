@@ -1,0 +1,151 @@
+name: Check Firefox Upstream Version
+
+on:
+  schedule:
+    - cron: '0 8 * * *'   # каждый день в 08:00 UTC
+  workflow_dispatch:        # ручной запуск
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      actions: write        # нужно для gh workflow run (dispatch upgrade-patches)
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Read current version from upstream.sh
+        id: current
+        run: |
+          source upstream.sh
+          echo "version=$version"   >> "$GITHUB_OUTPUT"
+          echo "release=$release"   >> "$GITHUB_OUTPUT"
+
+      - name: Fetch latest Firefox versions from Mozilla
+        id: latest
+        env:
+          CURRENT_VERSION: ${{ steps.current.outputs.version }}
+        run: |
+          DETAILS=$(curl -fsSL "https://product-details.mozilla.org/1.0/firefox_versions.json")
+
+          # Стабильный релиз (e.g. "147.0.2")
+          LATEST_RELEASE=$(echo "$DETAILS" | jq -r '.LATEST_FIREFOX_VERSION')
+          # Бета (e.g. "148.0b3" → "148.0")
+          LATEST_BETA_RAW=$(echo "$DETAILS" | jq -r '.LATEST_FIREFOX_RELEASED_DEVEL_VERSION')
+          LATEST_BETA=$(echo "$LATEST_BETA_RAW" | sed 's/b[0-9]*//')
+
+          # Validate parsed values — jq returns literal "null" on missing keys
+          if [ -z "$LATEST_RELEASE" ] || [ "$LATEST_RELEASE" = "null" ]; then
+            echo "::error::Failed to parse LATEST_FIREFOX_VERSION from Mozilla API"
+            echo "Raw response: $DETAILS"
+            exit 1
+          fi
+          if [ -z "$LATEST_BETA_RAW" ] || [ "$LATEST_BETA_RAW" = "null" ] || [ -z "$LATEST_BETA" ]; then
+            echo "::error::Failed to parse LATEST_FIREFOX_RELEASED_DEVEL_VERSION from Mozilla API"
+            echo "Raw response: $DETAILS"
+            exit 1
+          fi
+
+          echo "latest_release=$LATEST_RELEASE"     >> "$GITHUB_OUTPUT"
+          echo "latest_beta=$LATEST_BETA"           >> "$GITHUB_OUTPUT"
+          echo "latest_beta_raw=$LATEST_BETA_RAW"   >> "$GITHUB_OUTPUT"
+
+          echo "Current in upstream.sh : $CURRENT_VERSION"
+          echo "Latest release channel : $LATEST_RELEASE"
+          echo "Latest beta channel    : $LATEST_BETA_RAW  (parsed: $LATEST_BETA)"
+
+      - name: Compare versions and act
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURRENT: ${{ steps.current.outputs.version }}
+          CURRENT_RELEASE: ${{ steps.current.outputs.release }}
+          LATEST_RELEASE: ${{ steps.latest.outputs.latest_release }}
+          LATEST_BETA: ${{ steps.latest.outputs.latest_beta }}
+          LATEST_BETA_RAW: ${{ steps.latest.outputs.latest_beta_raw }}
+        run: |
+          version_gt() {
+            [ "$(printf '%s\n' "$1" "$2" | sort -V | tail -1)" != "$2" ]
+          }
+
+          NEEDS_UPDATE=false
+          UPDATE_TYPE=""
+          TITLE=""
+
+          if version_gt "$LATEST_RELEASE" "$CURRENT"; then
+            NEEDS_UPDATE=true
+            UPDATE_TYPE="release"
+            TITLE="Upstream update: Firefox $LATEST_RELEASE (was $CURRENT)"
+          elif version_gt "$LATEST_BETA" "$CURRENT"; then
+            NEEDS_UPDATE=true
+            UPDATE_TYPE="beta"
+            TITLE="Upstream beta available: Firefox $LATEST_BETA_RAW (current $CURRENT)"
+          fi
+
+          if [ "$NEEDS_UPDATE" = "false" ]; then
+            echo "Already up to date: $CURRENT"
+            exit 0
+          fi
+
+          echo "Update detected [$UPDATE_TYPE]: $TITLE"
+
+          BODY="## Firefox upstream update available\n\n"
+          BODY+="| | Version |\n|---|---|\n"
+          BODY+="| Current (\`upstream.sh\`) | \`$CURRENT\` |\n"
+          BODY+="| Latest release | \`$LATEST_RELEASE\` |\n"
+          BODY+="| Latest beta | \`$LATEST_BETA_RAW\` |\n\n"
+
+          if [ "$UPDATE_TYPE" = "release" ]; then
+            BODY+="The **upgrade-patches** workflow has been dispatched automatically. "
+            BODY+="It will test whether all patches apply to \`$LATEST_RELEASE\` and open a PR or "
+            BODY+="a failure issue.\n"
+          else
+            BODY+="This is a beta channel update. Run the upgrade workflow manually if needed:\n"
+            BODY+="\`\`\`\ngh workflow run upgrade-patches.yml --field new_version=$LATEST_BETA_RAW\n\`\`\`\n"
+          fi
+
+          BODY+="\n---\n*Автоматически обнаружено $(date -u +'%Y-%m-%d %H:%M UTC')*"
+
+          # Always print update info to workflow log (visible even without issues)
+          printf '%b\n' "$BODY"
+
+          ISSUES_ENABLED=$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.has_issues' 2>/dev/null || echo "false")
+          if [ "$ISSUES_ENABLED" = "true" ]; then
+            # Create label if needed
+            gh label create "upstream-update" \
+              --description "Firefox upstream version update required" \
+              --color "e11d48" 2>/dev/null || true
+
+            # Open (or update) tracking issue
+            EXISTING=$(gh issue list \
+              --label "upstream-update" \
+              --state open \
+              --json number \
+              --jq '.[0].number // empty')
+
+            if [ -n "$EXISTING" ]; then
+              gh issue comment "$EXISTING" --body "$(printf '%b' "$BODY")"
+              echo "Updated issue #$EXISTING"
+            else
+              gh issue create \
+                --title "$TITLE" \
+                --body "$(printf '%b' "$BODY")" \
+                --label "upstream-update"
+              echo "Issue created."
+            fi
+          else
+            echo "Issues are disabled on this repo — update details printed above."
+          fi
+
+          # For stable releases: automatically dispatch the upgrade workflow
+          # For beta: only create the issue (human decides when to upgrade)
+          if [ "$UPDATE_TYPE" = "release" ]; then
+            echo "Dispatching upgrade-patches.yml for $LATEST_RELEASE ..."
+            gh workflow run upgrade-patches.yml \
+              --field new_version="$LATEST_RELEASE" \
+              --field new_release="beta.1"
+            echo "Workflow dispatched."
+          fi

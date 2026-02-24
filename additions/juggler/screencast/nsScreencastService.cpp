@@ -17,8 +17,7 @@
 #include "nsIRandomGenerator.h"
 #include "nsISupportsPrimitives.h"
 #include "nsThreadManager.h"
-#include "nsView.h"
-#include "nsViewManager.h"
+// nsView.h / nsViewManager.h removed in FF147 (view layer merged into widget)
 #include "modules/desktop_capture/desktop_capturer.h"
 #include "modules/desktop_capture/desktop_capture_options.h"
 #include "modules/desktop_capture/desktop_frame.h"
@@ -324,13 +323,8 @@ nsresult nsScreencastService::StartVideoRecording(nsIScreencastServiceClient* aC
   PresShell* presShell = aDocShell->GetPresShell();
   if (!presShell)
     return NS_ERROR_UNEXPECTED;
-  nsViewManager* viewManager = presShell->GetViewManager();
-  if (!viewManager)
-    return NS_ERROR_UNEXPECTED;
-  nsView* view = viewManager->GetRootView();
-  if (!view)
-    return NS_ERROR_UNEXPECTED;
-  nsIWidget* widget = view->GetWidget();
+  // FF147: nsView/nsViewManager removed; widget access now via PresShell directly
+  nsIWidget* widget = presShell->GetNearestWidget();
 
   rtc::scoped_refptr<webrtc::VideoCaptureModuleEx> capturer = nullptr;
   for (auto& it : mIdToSession) {

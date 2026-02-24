@@ -124,10 +124,10 @@ index ea66d28e53..2abb83c3a6 100644
  #include "nsDocShell.h"
  #include "mozilla/OriginAttributes.h"
  #include "nsIDOMXULControlElement.h"
-@@ -7525,6 +7527,32 @@ void nsGlobalWindowInner::SetFontSpacingSeed(uint32_t seed, ErrorResult& aRv) {
+@@ -7525,6 +7527,37 @@ void nsGlobalWindowInner::SetFontSpacingSeed(uint32_t seed, ErrorResult& aRv) {
    }
  }
- 
+
 +void nsGlobalWindowInner::SetTimezone(const nsAString& timezone, ErrorResult& aRv) {
 +  uint32_t userContextId = 0;
 +  if (BrowsingContext* bc = GetBrowsingContext()) {
@@ -265,16 +265,17 @@ diff --git a/dom/base/nsGlobalWindowOuter.cpp b/dom/base/nsGlobalWindowOuter.cpp
 index a1b2c3d4e5..f6g7h8i9j0 100644
 --- a/dom/base/nsGlobalWindowOuter.cpp
 +++ b/dom/base/nsGlobalWindowOuter.cpp
-@@ -86,6 +86,8 @@
+@@ -86,6 +86,9 @@
  #include "js/friend/WindowProxy.h"  // js::IsWindowProxy, js::SetWindowProxy
  #include "jsapi.h"
  #include "jsfriendapi.h"
 +#include "TimezoneManager.h"
 +#include "js/Date.h"
++#include "mozilla/dom/ScriptSettings.h"
  #include "mozilla/Likely.h"
  #include "mozilla/Preferences.h"
  #include "mozilla/SchedulerGroup.h"
-@@ -2480,6 +2482,22 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
+@@ -2480,6 +2482,24 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
    if (bc->IsOwnedByProcess()) {
      MOZ_ALWAYS_SUCCEEDS(bc->SetCurrentInnerWindowId(mInnerWindow->WindowID()));
    }
@@ -288,15 +289,46 @@ index a1b2c3d4e5..f6g7h8i9j0 100644
 +    }
 +    nsAutoString storedTimezone;
 +    if (mozilla::dom::TimezoneManager::GetTimezone(userContextId, storedTimezone)) {
-+      if (JSContext* cx = nsContentUtils::GetCurrentJSContext()) {
++      mozilla::dom::AutoJSAPI jsapi;
++      if (jsapi.Init(mInnerWindow)) {
++        JSContext* cx = jsapi.cx();
 +        NS_LossyConvertUTF16toASCII timezoneASCII(storedTimezone);
 +        JS::SetRealmTimeZoneOverride(cx, timezoneASCII.get());
 +      }
 +    }
 +  }
- 
+
    // We no longer need the old inner window.  Start its destruction if
    // its not being reused and clear our reference.
+diff --git a/intl/components/src/TimeZone.cpp b/intl/components/src/TimeZone.cpp
+index fb4c0657ba..1b18d87681 100644
+--- a/intl/components/src/TimeZone.cpp
++++ b/intl/components/src/TimeZone.cpp
+@@ -8,7 +8,8 @@
+
+ #include <algorithm>
+ #include <string_view>
+-
++#include "unicode/unistr.h"
++#include "MaskConfig.hpp"
+ #include "unicode/uenum.h"
+ #if MOZ_INTL_USE_ICU_CPP_TIMEZONE
+ #  include "unicode/basictz.h"
+@@ -21,7 +22,13 @@ Result<UniquePtr<TimeZone>, ICUError> TimeZone::TryCreate(
+     Maybe<Span<const char>> aTimeZoneOverride) {
+   const char* zoneID = nullptr;
+   int32_t zoneIDLen = 0;
+-  if (aTimeZoneOverride) {
++
++  std::string camouTimeZone;
++  if (auto value = MaskConfig::GetString("timezone")) {
++    camouTimeZone = value.value();
++    zoneIDLen = static_cast<int32_t>(camouTimeZone.length());
++    zoneID = camouTimeZone.c_str();
++  } else if (aTimeZoneOverride) {
+     zoneIDLen = static_cast<int32_t>(aTimeZoneOverride->Length());
+     zoneID = aTimeZoneOverride->Elements();
+   }
 diff --git a/js/src/vm/Realm.cpp b/js/src/vm/Realm.cpp
 index 81b4d13cdb..ca04167603 100644
 --- a/js/src/vm/Realm.cpp

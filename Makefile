@@ -11,7 +11,8 @@ pacman := python python-pip p7zip go msitools wget aria2 sqlite
 .PHONY: help fetch setup setup-minimal clean set-target distclean build package \
         build-launcher check-arch revert edits run bootstrap mozbootstrap dir \
         package-linux package-macos package-windows vcredist_arch patch unpatch \
-        workspace check-arg edit-cfg ff-dbg tests update-ubo-assets generate-assets-car
+        workspace check-arg edit-cfg ff-dbg tests update-ubo-assets generate-assets-car \
+        test-patches
 
 help:
 	@echo "Available targets:"
@@ -37,6 +38,7 @@ help:
 	@echo "  unpatch         - Remove a patch"
 	@echo "  workspace       - Sets the workspace to a patch, assuming its applied"
 	@echo "  tests           - Runs the Playwright tests"
+	@echo "  test-patches    - Revert to unpatched state and re-apply all patches (local CI)"
 	@echo "  update-ubo-assets - Update the uBOAssets.json file"
 
 _ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
@@ -97,6 +99,17 @@ ff-dbg: setup
 
 revert:
 	cd $(cf_source_dir) && git reset --hard unpatched
+
+test-patches:
+	@if [ ! -d $(cf_source_dir)/.git ]; then \
+		echo "Error: no git repo in $(cf_source_dir). Run 'make setup' first."; \
+		exit 1; \
+	fi
+	@echo "--- Reverting to unpatched state ---"
+	$(MAKE) revert
+	@echo "--- Applying all patches ($(version)-$(release)) ---"
+	python3 scripts/patch.py $(version) $(release)
+	@echo "--- test-patches: all patches applied cleanly ---"
 
 dir:
 	@if [ ! -d $(cf_source_dir) ]; then \

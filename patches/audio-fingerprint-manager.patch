@@ -156,8 +156,8 @@ index cd9090cda3..a1b2c3d4e5 100644
      "AutoPrintEventDispatcher.h",
      "AutoSuppressEventHandlingAndSuspend.h",
      "BarProps.h",
-@@ -326,4 +326,9 @@ SOURCES += [
-     "nsWindowSizes.cpp",
+@@ -534,4 +534,9 @@ SOURCES += [
+     "nsPluginArray.cpp",
  ]
 
 +# AudioFingerprintManager compiled separately to avoid namespace pollution
@@ -165,7 +165,7 @@ index cd9090cda3..a1b2c3d4e5 100644
 +# alphabetically-later files like BarProps.cpp)
 +SOURCES += ["AudioFingerprintManager.cpp"]
 +
- UNIFIED_SOURCES += [
+ # Are we targeting x86-32 or x86-64?  If so, we want to include SSE2 code for
 diff --git a/dom/base/nsGlobalWindowInner.cpp b/dom/base/nsGlobalWindowInner.cpp
 index 748ae6cf83..b2c3d4e5f6 100644
 --- a/dom/base/nsGlobalWindowInner.cpp
@@ -179,7 +179,7 @@ index 748ae6cf83..b2c3d4e5f6 100644
  #include "AutoplayPolicy.h"
  #include "Crypto.h"
  #include "MainThreadUtils.h"
-@@ -7430,7 +7431,30 @@ Worklet* nsGlobalWindowInner::GetPaintWorklet(ErrorResult& aRv) {
+@@ -7430,8 +7431,33 @@ Worklet* nsGlobalWindowInner::GetPaintWorklet(ErrorResult& aRv) {
 
    return mPaintWorklet;
  }
@@ -217,7 +217,7 @@ diff --git a/dom/base/nsGlobalWindowInner.h b/dom/base/nsGlobalWindowInner.h
 index 3183172d29..c4d5e6f7a8 100644
 --- a/dom/base/nsGlobalWindowInner.h
 +++ b/dom/base/nsGlobalWindowInner.h
-@@ -676,6 +676,9 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
+@@ -676,7 +676,10 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
 
    mozilla::dom::Worklet* GetPaintWorklet(mozilla::ErrorResult& aRv);
 
@@ -242,7 +242,7 @@ index f59d01944a..d21c86e030 100644
 
  namespace mozilla::dom {
 
-@@ -303,5 +306,30 @@ bool AudioBuffer::RestoreJSChannelData(JSContext* aJSContext) {
+@@ -303,6 +306,31 @@ bool AudioBuffer::RestoreJSChannelData(JSContext* aJSContext) {
        MOZ_ASSERT(!isShared);  // Was created as unshared above
        CopyChannelDataToFloat(mSharedChannels, i, 0, jsData, Length());
      }
@@ -274,30 +274,31 @@ index f59d01944a..d21c86e030 100644
      mJSChannels[i] = array;
    }
 
-@@ -373,5 +401,23 @@ void AudioBuffer::CopyFromChannel(const Float32Array& aDestination,
-   aDestination.ProcessData([&](const Span<float>& aData, JS::AutoCheckCannotGC&&) {
-     CopyChannelDataToFloat(data, aChannelNumber, aBufferOffset, aData.Elements(),
-                            length);
+@@ -353,6 +353,24 @@ void AudioBuffer::CopyFromChannel(const Float32Array& aDestination,
+     aDestination.ProcessData([&](const Span<float>& aData,
+                                  JS::AutoCheckCannotGC&&) {
+       CopyChannelDataToFloat(mSharedChannels, aChannelNumber, aBufferOffset,
+                              aData.Elements(), calculateCount(aData.Length()));
 +
-+    // Apply audio fingerprint transformation after copying
-+    nsPIDOMWindowInner* global = GetParentObject();
-+    if (global) {
-+      // Get userContextId from window's document principal
-+      uint32_t userContextId = 0;
-+      Document* doc = global->GetExtantDoc();
-+      if (doc) {
-+        nsIPrincipal* principal = doc->NodePrincipal();
-+        if (principal) {
-+          userContextId = principal->GetUserContextId();
++      // Apply audio fingerprint transformation after copying
++      nsPIDOMWindowInner* global = GetParentObject();
++      if (global) {
++        // Get userContextId from window's document principal
++        uint32_t userContextId = 0;
++        Document* doc = global->GetExtantDoc();
++        if (doc) {
++          nsIPrincipal* principal = doc->NodePrincipal();
++          if (principal) {
++            userContextId = principal->GetUserContextId();
++          }
++        }
++        uint32_t seed = AudioFingerprintManager::GetSeed(userContextId);
++        if (seed != 0) {
++          AudioFingerprintManager::ApplyTransformation(aData.Elements(), length, seed);
 +        }
 +      }
-+      uint32_t seed = AudioFingerprintManager::GetSeed(userContextId);
-+      if (seed != 0) {
-+        AudioFingerprintManager::ApplyTransformation(aData.Elements(), length, seed);
-+      }
-+    }
-   });
- }
+     });
+     return;
 
 diff --git a/dom/media/webaudio/AnalyserNode.cpp b/dom/media/webaudio/AnalyserNode.cpp
 index 4fd7c8be9a..e5f6a7b8c9 100644
@@ -416,12 +417,16 @@ diff --git a/dom/media/webaudio/moz.build b/dom/media/webaudio/moz.build
 index 3ee8c0aa76..4cf10f3039 100644
 --- a/dom/media/webaudio/moz.build
 +++ b/dom/media/webaudio/moz.build
-@@ -155,2 +155,5 @@ include("/ipc/chromium/chromium-config.mozbuild")
+@@ -155,5 +155,8 @@ include("/ipc/chromium/chromium-config.mozbuild")
  FINAL_LIBRARY = "xul"
  LOCAL_INCLUDES += [".."]
-+
+
 +# AudioFingerprintManager in dom/base
 +LOCAL_INCLUDES += ["/dom/base"]
++
+ # DOM Mask
+ LOCAL_INCLUDES += ["/camoucfg"]
+\ No newline at end of file
 diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
 index 7c509eb87e..7a076768d1 100644
 --- a/dom/webidl/Window.webidl
