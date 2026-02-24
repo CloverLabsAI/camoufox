@@ -262,10 +262,10 @@ index 3183172d29..d4e5f6a7b8 100644
 +  void SetScreenDimensions(int32_t aWidth, int32_t aHeight, mozilla::ErrorResult& aRv);
 +  void SetScreenColorDepth(int32_t aColorDepth, mozilla::ErrorResult& aRv);
 +
+   // Audio fingerprint seed for per-context audio fingerprinting
+   void SetAudioFingerprintSeed(uint32_t seed, mozilla::ErrorResult& aRv);
+
    void GetRegionalPrefsLocales(nsTArray<nsString>& aLocales);
-
-   void GetWebExposedLocales(nsTArray<nsString>& aLocales);
-
 diff --git a/dom/webidl/Window.webidl b/dom/webidl/Window.webidl
 index a6f0d96a36..b1c2d3e4f5 100644
 --- a/dom/webidl/Window.webidl
