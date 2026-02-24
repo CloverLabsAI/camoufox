@@ -279,12 +279,13 @@ diff --git a/dom/base/moz.build b/dom/base/moz.build
 index cd9090cda3..93cea20206 100644
 --- a/dom/base/moz.build
 +++ b/dom/base/moz.build
-@@ -255,6 +255,7 @@ EXPORTS.mozilla.dom += [
+@@ -255,7 +255,8 @@ EXPORTS.mozilla.dom += [
      "RequestCallbackManager.h",
      "ResizeObserver.h",
      "ResponsiveImageSelector.h",
 +    "RoverfoxStorageManager.h",
      "SameProcessMessageQueue.h",
+     "ScreenDimensionManager.h",
      "ScreenLuminance.h",
      "ScreenOrientation.h",
 @@ -289,6 +290,7 @@ EXPORTS.mozilla.dom += [
