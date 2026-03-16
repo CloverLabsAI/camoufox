@@ -89,12 +89,59 @@ def get_env_vars(
     return env_vars
 
 
+def _resolve_executable_resources(path: Path) -> Path:
+    """
+    Resolve the resources directory for a given executable path.
+    On macOS, the binary is in Contents/MacOS/ but resources are in Contents/Resources/.
+    On other platforms, resources are in the same directory as the binary.
+    """
+    parent = path.parent
+    # macOS .app bundle: Contents/MacOS/camoufox -> Contents/Resources/
+    if parent.name == "MacOS" and parent.parent.name == "Contents":
+        resources = parent.parent / "Resources"
+        if resources.exists():
+            return resources
+    return parent
+
+
+def _resolve_ff_version(executable_path: Optional[Path] = None) -> str:
+    """
+    Resolve the Firefox major version string.
+    Tries the installed version first, falls back to application.ini
+    next to the executable if no installed version is available.
+    """
+    # Try the standard installed version
+    try:
+        return installed_verstr().split('.', 1)[0]
+    except Exception:
+        pass
+
+    # Fall back to application.ini next to the executable
+    if executable_path:
+        resources = _resolve_executable_resources(executable_path)
+        app_ini = resources / "application.ini"
+        if app_ini.exists():
+            import configparser
+            cfg = configparser.ConfigParser()
+            cfg.read(str(app_ini))
+            try:
+                return cfg.get("App", "Version").split('.', 1)[0]
+            except (configparser.NoSectionError, configparser.NoOptionError):
+                pass
+
+    raise FileNotFoundError(
+        "Could not determine Firefox version. Pass ff_version explicitly "
+        "or install Camoufox with `camoufox fetch`."
+    )
+
+
 def _load_properties(path: Optional[Path] = None) -> Dict[str, str]:
     """
     Loads the properties.json file.
     """
     if path:
-        prop_file = str(path.parent / "properties.json")
+        resources = _resolve_executable_resources(path)
+        prop_file = str(resources / "properties.json")
     else:
         prop_file = get_path("properties.json")
     with open(prop_file, "rb") as f:
@@ -538,7 +585,7 @@ def launch_options(
         ff_version_str = str(ff_version)
         LeakWarning.warn('ff_version', i_know_what_im_doing)
     else:
-        ff_version_str = installed_verstr().split('.', 1)[0]
+        ff_version_str = _resolve_ff_version(executable_path)
 
     # Generate a fingerprint
     _used_preset = False
