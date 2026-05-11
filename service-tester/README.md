@@ -1,11 +1,12 @@
 # Camoufox Service Tests
 
-End-to-end antibot-detection tests that verify a pip-installed camoufox release works correctly — both the Firefox binary and the Python package — using real proxies for each browser context.
+End-to-end antibot-detection tests that drive a locally-compiled Camoufox binary through the locally-built Python package, using real proxies for each browser context. Used to validate the full stack — pythonlib + binary — before release.
 
 ## Prerequisites
 
 - Python 3.9+
 - Node.js (for building the TypeScript checks bundle via `esbuild`)
+- A locally compiled Camoufox binary (`make build` from the repo root, or pass `--executable-path`)
 - At least one proxy in `proxies.txt`
 
 ## Quick Start
@@ -19,18 +20,15 @@ End-to-end antibot-detection tests that verify a pip-installed camoufox release 
 `run_tests.sh` will:
 1. Install npm deps in `../build-tester/` (for `esbuild`, first run only)
 2. Create a `.venv` virtualenv (first run only)
-3. Build a wheel from `../pythonlib` and install it (tests the actual packaged artifact)
-4. **Phase 1** — run the suite against the locally compiled binary, auto-detected from:
+3. Build a wheel from `../pythonlib` and install it (so the test runs against your local pythonlib changes)
+4. Auto-detect the locally compiled binary:
    - macOS: `../camoufox-*/obj-*-apple-darwin/dist/Camoufox.app/Contents/MacOS/camoufox`
    - Linux: `../camoufox-*/obj-*-linux-*/dist/bin/camoufox-bin`
 
-   Skipped (with a notice) if no local build is found. On macOS, the script also copies `properties.json` from `Camoufox.app/Contents/Resources/` into `MacOS/` so pythonlib can locate it next to the binary.
-5. **Phase 2** — download the official binary (`--browser-version`, default `official/stable`) and run the suite against it
-6. Exit `0` only if both phases pass
+   On macOS, `properties.json` is copied from `Camoufox.app/Contents/Resources/` into `MacOS/` so pythonlib can locate it next to the binary.
+5. Run the suite against that binary.
 
-Use `--binary local` or `--binary fetched` to run only one phase.
-
-> **Heads-up on Phase 2:** if the latest `official/stable` is much older than the local pythonlib (e.g. v135 binary vs pythonlib targeting v149+), the binary may not understand newer fingerprint patches and the test page can fail to produce results. Pin a newer binary with `--browser-version` to avoid this.
+If no local build is found, the script errors out — pass `--executable-path PATH` to point at a specific binary instead.
 
 ## Proxies
 
@@ -71,31 +69,24 @@ pip install build
 (cd ../pythonlib && rm -rf dist && python -m build --wheel -o dist)
 pip install --force-reinstall ../pythonlib/dist/*.whl
 
-# Download the browser binary
-python -m camoufox fetch
-
-# Run tests
-python run_tests.py
+# Run tests against your local binary
+python run_tests.py --executable-path ../camoufox-150.0.2-beta.25/obj-aarch64-apple-darwin/dist/Camoufox.app/Contents/MacOS/camoufox
 ```
 
 ## Options
 
 ```
 ./run_tests.sh [options]
-python run_tests.py [options]
+python run_tests.py --executable-path PATH [options]
 
-  --browser-version VER   Camoufox version specifier (default: official/stable)
-                          e.g. official/prerelease/146.0.1-beta.50
+  --executable-path PATH  Path to the Camoufox binary (required for run_tests.py;
+                          auto-detected by run_tests.sh)
   --profile-count N       Number of profiles to test (1-6, default: 6)
   --proxies PATH          Path to proxies file (default: proxies.txt)
   --headful               Run with visible browser window
   --no-cert               Skip certificate generation
   --save-cert PATH        Save certificate text to a file
   --secret KEY            HMAC signing key for the certificate
-  --binary MODE           Which binary to test: local | fetched | both (default: both)
-                          (run_tests.sh only — orchestrates the two phases)
-  --executable-path PATH  Run against a specific binary path
-                          (run_tests.py only — used internally by phase 1)
 ```
 
 ## What It Tests
@@ -141,4 +132,6 @@ The cross-profile uniqueness section confirms each context has distinct audio, c
 
 ## Failure Triage
 
-If a check fails, **fix it in the Python package** (`../pythonlib/camoufox/`), not in the test. The test is intentionally a black-box validator — it only uses the public `AsyncNewContext` API and trusts camoufox to produce correct fingerprints.
+If a check fails, **fix it in the Python package** (`../pythonlib/camoufox/`) or in the C++ patches (`../patches/`), not in the test. The test is intentionally a black-box validator — it only uses the public `AsyncNewContext` API and trusts camoufox to produce correct fingerprints.
+
+The 6-context concurrent launch is occasionally flaky: if every context returns `'NoneType' object has no attribute 'get'`, the test page never published its results (proxy/launch timing race). Re-run before treating it as a regression.
