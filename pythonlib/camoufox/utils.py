@@ -103,14 +103,17 @@ def get_env_vars(
     if OS_NAME == 'lin':
         # https://github.com/coryking/camoufox/commit/f21eeb2850a74cc104fb57e17e0a2fa27b7a2a28
         # Thanks @coryking
-        # the user_agent_os is either 'lin', 'mac', or 'win' but our fontconfigs directory is 'linux', 'macos', or 'windows'
+        # user_agent_os is 'lin'/'mac'/'win'; the bundled fontconfig dir uses 'linux'/'macos'/'windows'.
         directory_map = {
             'lin': 'linux',
             'mac': 'macos',
             'win': 'windows',
         }
         os_dir = directory_map.get(user_agent_os, user_agent_os)
-        fontconfig_path = get_path(os.path.join("fontconfigs", os_dir))
+        # v150+ ships this as "fontconfig/"; pre-v150 builds used "fontconfigs/".
+        fontconfig_path = get_path(os.path.join("fontconfig", os_dir))
+        if not os.path.exists(os.path.join(fontconfig_path, "fonts.conf")):
+            fontconfig_path = get_path(os.path.join("fontconfigs", os_dir))
 
         # assert that fonts.conf exists in the directory
         if not os.path.exists(os.path.join(fontconfig_path, "fonts.conf")):

@@ -2,16 +2,16 @@
 """
 Camoufox Service Tester — Python CLI
 
-Tests an official Camoufox release (installed via pip) using the same
-antibot-detection checks as the build-tester, but launched via the
-camoufox Python API instead of a raw binary path.
+Drives a Camoufox binary through the camoufox Python API and runs the same
+antibot-detection checks as the build-tester. Always uses the locally-built
+pythonlib (the wrapper script `run_tests.sh` builds and installs it from
+`../pythonlib` before invoking this script).
 
 Usage:
-  python run_tests.py [options]
+  python run_tests.py --executable-path PATH [options]
 
 Options:
-  --browser-version VER   Camoufox version specifier (default: official/stable)
-                          e.g. official/prerelease/146.0.1-beta.50
+  --executable-path PATH  Camoufox binary to test (required)
   --profile-count N       Number of profiles to test (1-6, default: 6)
   --headful               Run with visible browser window
   --proxies PATH          Path to proxies file (default: proxies.txt next to this script)
@@ -41,14 +41,13 @@ from _proxies import load_proxies, resolve_proxy_geo
 
 
 async def run_tests(
-    browser_version: str,
+    executable_path: str,
     profile_count: int,
     headful: bool,
     proxies_path: Path,
     secret: str,
     save_cert: Optional[str],
     no_cert: bool,
-    executable_path: Optional[str] = None,
 ) -> int:
     # 1. Ensure checks bundle is built
     ensure_bundle()
@@ -80,15 +79,6 @@ async def run_tests(
     test_page_url = f"http://127.0.0.1:{port}/test"
     print(f"HTTP server started on port {port}")
 
-    # 5. Parse ff_version from browser_version specifier
-    ff_version = None
-    for part in browser_version.split("/"):
-        try:
-            ff_version = int(part.split(".")[0])
-            break
-        except ValueError:
-            continue
-
     profile_results: list = []
     timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -101,14 +91,9 @@ async def run_tests(
     print(f"\n{'─' * 60}")
     print(f"Per-context phase: {len(entries)} profiles (all open simultaneously)")
     print(f"{'─' * 60}")
-    print("Launching browser...")
+    print(f"Launching browser: {executable_path}")
 
-    launch_kwargs = {"headless": not headful}
-    if executable_path:
-        launch_kwargs["executable_path"] = executable_path
-        print(f"Using local binary: {executable_path}")
-    elif ff_version:
-        launch_kwargs["ff_version"] = ff_version
+    launch_kwargs = {"headless": not headful, "executable_path": executable_path}
 
     try:
         async with AsyncCamoufox(**launch_kwargs) as browser:
@@ -223,8 +208,8 @@ async def run_tests(
 
 def main():
     parser = argparse.ArgumentParser(description="Camoufox Service Tester")
-    parser.add_argument("--browser-version", default="official/stable",
-                        help="Camoufox version specifier (default: official/stable)")
+    parser.add_argument("--executable-path", required=True,
+                        help="Path to the Camoufox binary to test")
     parser.add_argument("--profile-count", type=int, default=6,
                         help="Number of profiles to test (1-6, default: 6)")
     parser.add_argument("--headful", action="store_true",
@@ -237,19 +222,16 @@ def main():
                         help="Save certificate to this file path")
     parser.add_argument("--no-cert", action="store_true",
                         help="Skip certificate generation")
-    parser.add_argument("--executable-path", default=None,
-                        help="Use a specific Camoufox binary (skips fetched-version selection)")
     args = parser.parse_args()
 
     sys.exit(asyncio.run(run_tests(
-        browser_version=args.browser_version,
+        executable_path=args.executable_path,
         profile_count=args.profile_count,
         headful=args.headful,
         proxies_path=Path(args.proxies),
         secret=args.secret,
         save_cert=args.save_cert,
         no_cert=args.no_cert,
-        executable_path=args.executable_path,
     )))
 
 
